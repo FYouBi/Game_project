@@ -19,6 +19,10 @@ while running:
             running = False
         if event.type == STEP_EVENT:
             player.do_step()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                player.hit()
+
     if KEY[pygame.K_d]:
         player.move_right()
     if KEY[pygame.K_a]:
