@@ -1,0 +1,3 @@
+WIDTH, HEIGHT = 1000, 700
+FPS = 60
+BLACK = 0, 0, 0
