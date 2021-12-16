@@ -1,3 +1,5 @@
 WIDTH, HEIGHT = 1000, 700
-FPS = 60
+FPS = 144
+SPEED = 1.5
+KEY = None
 BLACK = 0, 0, 0
