@@ -19,14 +19,22 @@ while running:
             running = False
         if event.type == STEP_EVENT:
             player.do_step()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                player.hit()
+
     if KEY[pygame.K_d]:
-        player.move_right()
+        if player.rect.topright[0] < WIDTH:
+            player.move_right()
     if KEY[pygame.K_a]:
-        player.move_left()
+        if player.rect.topleft[0] > 0:
+            player.move_left()
     if KEY[pygame.K_w]:
-        player.move_up()
+        if player.rect.topleft[1] > 0:
+            player.move_up()
     if KEY[pygame.K_s]:
-        player.move_down()
+        if player.rect.bottomleft[1] < HEIGHT:
+            player.move_down()
 
     screen.fill(WHITE)
     hero_sprite.draw(screen)
