@@ -12,6 +12,7 @@ clock = pygame.time.Clock()
 hero_sprite = pygame.sprite.Group()
 player = Hero(hero_sprite)
 running = True
+
 while running:
     for event in pygame.event.get():
         KEY = pygame.key.get_pressed()
