@@ -30,4 +30,8 @@ class Hero(pygame.sprite.Sprite):
         self.step_count += 1 if self.step_count == 1 else -1
 
     def hit(self):
+ main
         self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+=======
+        self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+  master
