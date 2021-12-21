@@ -31,3 +31,7 @@ class Hero(pygame.sprite.Sprite):
 
     def hit(self):
         self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+
+
+hero_sprite = pygame.sprite.Group()
+player = Hero(hero_sprite)

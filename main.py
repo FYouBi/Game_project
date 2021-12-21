@@ -1,6 +1,7 @@
 import pygame
 from settings import *
-from hero import Hero
+from hero import *
+from mobs import *
 
 pygame.init()
 
@@ -9,8 +10,8 @@ pygame.time.set_timer(STEP_EVENT, 200)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-hero_sprite = pygame.sprite.Group()
-player = Hero(hero_sprite)
+
+
 running = True
 
 while running:
@@ -36,9 +37,10 @@ while running:
     if KEY[pygame.K_s]:
         if player.rect.bottomleft[1] < HEIGHT:
             player.move_down()
-
+    mob.run()
     screen.fill(WHITE)
     hero_sprite.draw(screen)
+    mobs_sprite.draw(screen)
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()
