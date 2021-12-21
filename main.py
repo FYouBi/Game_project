@@ -1,7 +1,7 @@
 import pygame
 from settings import *
-from hero import *
-from mobs import *
+from hero import player, hero_sprite
+from mobs import mobs_sprite
 
 pygame.init()
 
@@ -10,7 +10,6 @@ pygame.time.set_timer(STEP_EVENT, 200)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-
 
 running = True
 
@@ -37,10 +36,18 @@ while running:
     if KEY[pygame.K_s]:
         if player.rect.bottomleft[1] < HEIGHT:
             player.move_down()
-    mob.run()
+    for mob in mobs_sprite.sprites():
+        distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
+                    (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
+
+        if distance <= 250:
+            mob.run()
+
     screen.fill(WHITE)
+
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
+
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()
