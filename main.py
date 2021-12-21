@@ -56,15 +56,20 @@ while running:
         if distance <= 400:
             mob.run()
 
-    screen.fill(WHITE)
+    screen.fill((69, 68, 89))
+
+    pygame.draw.rect(screen, BLACK, (5, 5, 160, 30), 1)
+    for i in range(player.health):
+        pygame.draw.rect(screen, (235, 55, 52), (5 + 20 * i, 5, 20, 30))
 
     font = pygame.font.Font(None, 50)
-    text = font.render(f'{player.health}', True, RED)
-    screen.blit(text, (5, 5))
+    text = font.render(f'{player.health}', True, BLACK)
+    screen.blit(text, (145, 5))
 
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
 
+    print(clock.get_fps())
     clock.tick(FPS)
     pygame.display.flip()
 pygame.quit()

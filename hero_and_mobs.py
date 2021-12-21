@@ -74,8 +74,10 @@ class Mob(pygame.sprite.Sprite):
         if self.can_hit:
             if self.hero_pos[0] < self.rect.x - 1:
                 self.rect.x -= 1
+                self.image = pygame.image.load(f'images/mob_left.png')
             if self.hero_pos[0] > self.rect.x - 1:
                 self.rect.x += 1
+                self.image = pygame.image.load(f'images/mob_right.png')
             if self.hero_pos[1] < self.rect.y - 1:
                 self.rect.y -= 1
             if self.hero_pos[1] > self.rect.y - 1:
@@ -84,8 +86,10 @@ class Mob(pygame.sprite.Sprite):
         else:
             if self.hero_pos[0] < self.rect.x - 1:
                 self.rect.x += 1
+                self.image = pygame.image.load(f'images/mob_right.png')
             if self.hero_pos[0] > self.rect.x - 1:
                 self.rect.x -= 1
+                self.image = pygame.image.load(f'images/mob_left.png')
             if self.hero_pos[1] < self.rect.y - 1:
                 self.rect.y += 1
             if self.hero_pos[1] > self.rect.y - 1:
