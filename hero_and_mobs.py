@@ -12,36 +12,65 @@ class Hero(pygame.sprite.Sprite):
         self.step_count = 1
         self.way = 'right'
         self.rect = self.image.get_rect()
-        self.health = 8
+        self.health = default_HEALTH_PLAYER
+        self.velocity = SPEED
+        self.stamina = 160
+        self.update_render_player = True
+
+    def sprint(self):
+        if self.update_render_player:
+            if self.stamina > 0:
+                if self.velocity > SPEED:
+                    self.velocity = self.velocity
+                elif self.velocity <= SPEED:
+                    self.velocity *= 1.5
+                self.stamina -= PIXEL_SEC / FPS + 0.2
+
+    def up_stamina(self):
+        self.stamina += PIXEL_SEC / FPS + 0.5
+
+    def right_mouse(self):
+        if self.update_render_player:
+            self.way = 'right'
+
+    def left_mouse(self):
+        if self.update_render_player:
+            self.way = 'left'
 
     def move_right(self):
-        self.rect.x += SPEED + 1
-        self.way = 'right'
+        if self.update_render_player:
+            self.rect.x += self.velocity + 1
 
     def move_left(self):
-        self.rect.x -= SPEED + 1
-        self.way = 'left'
+        if self.update_render_player:
+            self.rect.x -= self.velocity + 1
 
     def move_up(self):
-        self.rect.y -= SPEED + 1
+        if self.update_render_player:
+            self.rect.y -= self.velocity + 1
 
     def move_down(self):
-        self.rect.y += SPEED + 1
+        if self.update_render_player:
+            self.rect.y += self.velocity + 1
 
     def do_step(self):
-        self.image = pygame.image.load(f'images/hero_default_{self.way}_step_{self.step_count}.png')
-        self.step_count += 1 if self.step_count == 1 else -1
+        if self.update_render_player:
+            self.image = pygame.image.load(f'images/hero_default_{self.way}_step_{self.step_count}.png')
+            self.step_count += 1 if self.step_count == 1 else -1
 
     def hit(self):
-        self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
-        for mob in mobs_sprite.sprites():
-            if pygame.sprite.collide_mask(self, mob):
-                mob.check_health()
+        if self.update_render_player:
+            self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+            for mob in mobs_sprite.sprites():
+                if pygame.sprite.collide_mask(self, mob):
+                    mob.check_health()
 
     def check_health(self):
-        self.health -= 1
-        if self.health <= 0:
-            pass
+        if self.update_render_player:
+            self.health -= default_DAMAGE_MOB
+            if self.health <= 0:
+                self.health = 0
+                self.update_render_player = False
 
     def the_world(self):
         for mob in mobs_sprite.sprites():
@@ -58,7 +87,7 @@ class Mob(pygame.sprite.Sprite):
         self.freeze = False
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.spawn[0], self.spawn[1]
-        self.health = 3
+        self.health = default_HEALTH_MOB
 
     def run(self):
         if not self.freeze:
@@ -88,7 +117,6 @@ class Mob(pygame.sprite.Sprite):
                     self.rect.y -= 1
                 if self.hero_pos[1] > self.rect.y - 1:
                     self.rect.y += 1
-
             else:
                 if self.hero_pos[0] < self.rect.x - 1:
                     self.rect.x += 1
@@ -103,10 +131,11 @@ class Mob(pygame.sprite.Sprite):
 
             if self.crash > 0 and self.can_hit:
                 self.can_hit = False
+                self.image = pygame.image.load(f'images/mob_left3.png')
                 player.check_health()
 
     def check_health(self):
-        self.health -= 1
+        self.health -= default_DAMAGE_PLAYER
         if self.health <= 0:
             mobs_sprite.remove(self)
 
@@ -118,5 +147,5 @@ hero_sprite = pygame.sprite.Group()
 player = Hero(hero_sprite)
 
 mobs_sprite = pygame.sprite.Group()
-for _ in range(3):
+for _ in range(4):
     Mob(mobs_sprite)
