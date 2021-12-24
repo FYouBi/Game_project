@@ -1,8 +1,4 @@
-import os
-
 import pygame
-
-import hero_mobs
 from cam import Camera
 from settings import *
 from hero_mobs import player, hero_sprite, mobs_sprite
@@ -116,6 +112,8 @@ while running:
     for event in pygame.event.get():
         KEY = pygame.key.get_pressed()
         M = pygame.mouse.get_pressed()
+        motion = pygame.mouse.get_pos()
+        print(motion)
         if event.type == pygame.QUIT:
             running = False
         if KEY[pygame.K_ESCAPE]:
@@ -167,17 +165,17 @@ while running:
                 player.velocity = SPEED
 
     if KEY[pygame.K_d]:
-        if player.rect.topright[0] < WIDTH:
-            player.move_right()
+        player.move_right()
     if KEY[pygame.K_a]:
-        if player.rect.topleft[0] > 0:
-            player.move_left()
+        player.move_left()
     if KEY[pygame.K_w]:
-        if player.rect.topleft[1] > 0:
-            player.move_up()
+        player.move_up()
     if KEY[pygame.K_s]:
-        if player.rect.bottomleft[1] < HEIGHT:
-            player.move_down()
+        player.move_down()
+    if motion[0] >= WIDTH//2 + 10 and motion[1] >= 0:
+        player.right_mouse()
+    if motion[0] <= WIDTH//2 - 10 and motion[1] >= 0:
+        player.left_mouse()
 
     for mob in mobs_sprite.sprites():
         distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
