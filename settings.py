@@ -24,3 +24,4 @@ default_DAMAGE_PLAYER = 14
 default_DAMAGE_MOB = 17
 default_HEALTH_MOB = 84
 default_HEALTH_PLAYER = 100
+ENDURANCE = 100
