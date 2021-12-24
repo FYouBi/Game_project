@@ -14,17 +14,31 @@ class Hero(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
+        self.stamina = ENDURANCE
         self.update_render_player = True
+
+    def sprint(self):
+        if self.update_render_player:
+            if self.velocity > SPEED:
+                self.velocity = self.velocity
+            elif self.velocity <= SPEED:
+                self.velocity *= 1.5
+
+    def right_mouse(self):
+        if self.update_render_player:
+            self.way = 'right'
+
+    def left_mouse(self):
+        if self.update_render_player:
+            self.way = 'left'
 
     def move_right(self):
         if self.update_render_player:
             self.rect.x += self.velocity + 1
-            self.way = 'right'
 
     def move_left(self):
         if self.update_render_player:
             self.rect.x -= self.velocity + 1
-            self.way = 'left'
 
     def move_up(self):
         if self.update_render_player:
@@ -127,5 +141,5 @@ hero_sprite = pygame.sprite.Group()
 player = Hero(hero_sprite)
 
 mobs_sprite = pygame.sprite.Group()
-for _ in range(3):
+for _ in range(4):
     Mob(mobs_sprite)
