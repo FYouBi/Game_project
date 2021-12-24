@@ -2,6 +2,7 @@ import pygame
 from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
+from cursor import cursor, trigger
 
 
 pygame.init()
@@ -41,12 +42,8 @@ font_size_Died = 30
 width_batery_color = 0
 stamina = ENDURANCE
 auto_aim = 0
-
-trigger = pygame.sprite.Group()
-cursor_image = pygame.image.load("images/trigger.png")
-cursor = pygame.sprite.Sprite(trigger)
-cursor.image = cursor_image
-cursor.rect = cursor.image.get_rect()
+dict_of_distance = {}
+sorted_keys = None
 
 
 def render_all_font_HUD():
@@ -120,8 +117,8 @@ def render_all_font_HUD():
 
 while running:
     for event in pygame.event.get():
-        print(f'Выносливость: {stamina}')
-        print(f'Скорость:{player.velocity}')
+        # print(f'Выносливость: {stamina}')
+        # print(f'Скорость:{player.velocity}')
         KEY = pygame.key.get_pressed()
         M = pygame.mouse.get_pressed()
         motion = pygame.mouse.get_pos()
@@ -131,31 +128,15 @@ while running:
         if KEY[pygame.K_ESCAPE]:
             running = False
 
-        if event.type == pygame.MOUSEMOTION:
+        if event.type == pygame.MOUSEMOTION and not cursor.have_target:
             cursor.rect.topleft = event.pos
 
         elif M[0]:
             player.hit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 2:
-                if auto_aim == 0:
-                    auto_aim = 1
-                else:
-                    auto_aim = 0
-                if auto_aim == 1:
-                    trigger = pygame.sprite.Group()
-                    cursor_image = pygame.image.load("images/trigger.png")
-                    cursor = pygame.sprite.Sprite(trigger)
-                    cursor.image = cursor_image
-                    cursor.rect = cursor.image.get_rect()
-                    cursor.rect.topleft = motion
-                else:
-                    trigger = pygame.sprite.Group()
-                    cursor_image = pygame.image.load("images/auto_aim_trigger.png")
-                    cursor = pygame.sprite.Sprite(trigger)
-                    cursor.image = cursor_image
-                    cursor.rect = cursor.image.get_rect()
-                    cursor.rect.topleft = motion
+                cursor.change_aim()
+                auto_aim = cursor.aim
 
         if event.type == STEP_EVENT:
             player.do_step()
@@ -221,12 +202,23 @@ while running:
         player.right_mouse()
     if motion[0] < WIDTH//2 - 1 and motion[1] >= 0:
         player.left_mouse()
-
     for mob in mobs_sprite.sprites():
         distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
                     (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
+        if auto_aim and distance <= 450:
+            mob_rect = mob.rect.copy()
+            dict_of_distance[distance] = mob_rect
+            cursor.have_target = True
+        else:
+            dict_of_distance = {}
+            cursor.have_target = False
+        sorted_keys = sorted(dict_of_distance, key=dict_of_distance.get, reverse=True)
         if distance <= 450:
             mob.run()
+
+    if auto_aim and dict_of_distance:
+        print(auto_aim, dict_of_distance[sorted_keys[0]])
+        cursor.rect = dict_of_distance[sorted_keys[0]]
 
     screen.fill(BACKGROUND)
     render_all_font_HUD()
@@ -235,8 +227,8 @@ while running:
     camera.update(player)
     for sprite in hero_sprite:
         camera.apply(sprite)
-    for sprit in mobs_sprite:
-        camera.apply(sprit)
+    for sprite in mobs_sprite:
+        camera.apply(sprite)
     clock.tick(FPS)
     pygame.display.flip()
 

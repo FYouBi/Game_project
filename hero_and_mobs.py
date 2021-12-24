@@ -25,6 +25,8 @@ class Hero(pygame.sprite.Sprite):
                 elif self.velocity <= SPEED:
                     self.velocity *= 1.5
                 self.stamina -= PIXEL_SEC / FPS + 0.2
+            else:
+                self.velocity = SPEED
 
     def up_stamina(self):
         self.stamina += PIXEL_SEC / FPS + 0.5
