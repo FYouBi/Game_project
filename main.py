@@ -25,6 +25,9 @@ pygame.time.set_timer(ABILITY_TIME, 0)
 FROZEN = pygame.USEREVENT + 6
 pygame.time.set_timer(FROZEN, 4000)
 
+endurance = pygame.USEREVENT + 7
+pygame.time.set_timer(endurance, 1000)
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 pygame.mouse.set_visible(False)
@@ -34,7 +37,8 @@ font_size_Died = 30
 pixel_sec = 10
 width_batery_color = 0
 camera = Camera()
-
+stamina = ENDURANCE
+auto_aim = 0
 
 trigger = pygame.sprite.Group()
 cursor_image = pygame.image.load("images/trigger.png")
@@ -73,6 +77,9 @@ def render_all_font_HUD():
         if player.health <= default_HEALTH_PLAYER - 12:
             pygame.draw.rect(screen, YELLOW, (yellow_kf, 5, 20, 30))
         pygame.draw.rect(screen, (235, 55, 52), (kf, 5, 20, 30))
+    for i in range(player.stamina):
+        kf = 5 + 20 * (i // 13)
+        pygame.draw.rect(screen, LIGHT_BLUE, (kf + 5, 40, 20, 10))
 
     if player.health > int(default_HEALTH_PLAYER * 0.6):
         health_color = STATUS_BAR_HEALTH_FULL_COLOR
@@ -110,10 +117,11 @@ def render_all_font_HUD():
 
 while running:
     for event in pygame.event.get():
+        print(f'Выносливость: {stamina}')
+        print(f'Скорость:{player.velocity}')
         KEY = pygame.key.get_pressed()
         M = pygame.mouse.get_pressed()
         motion = pygame.mouse.get_pos()
-        print(motion)
         if event.type == pygame.QUIT:
             running = False
         if KEY[pygame.K_ESCAPE]:
@@ -124,6 +132,29 @@ while running:
 
         elif M[0]:
             player.hit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 2:
+                if auto_aim == 0:
+                    auto_aim = 1
+                else:
+                    auto_aim = 0
+                if auto_aim == 1:
+                    trigger = pygame.sprite.Group()
+                    cursor_image = pygame.image.load("images/trigger.png")
+                    cursor = pygame.sprite.Sprite(trigger)
+                    cursor.image = cursor_image
+                    cursor.rect = cursor.image.get_rect()
+                    cursor.rect.topleft = motion
+                else:
+                    trigger = pygame.sprite.Group()
+                    cursor_image = pygame.image.load("images/auto_aim_trigger.png")
+                    cursor = pygame.sprite.Sprite(trigger)
+                    cursor.image = cursor_image
+                    cursor.rect = cursor.image.get_rect()
+                    cursor.rect.topleft = motion
+
+        if KEY[pygame.K_LSHIFT]:
+            player.sprint()
 
         if event.type == STEP_EVENT:
             player.do_step()
@@ -144,7 +175,6 @@ while running:
         if event.type == ABILITY_READY:
             ABILITY = True
             pygame.time.set_timer(ABILITY_READY, 0)
-            print('ready')
 
         if event.type == ABILITY_TIME:
             pygame.time.set_timer(ABILITY_TIME, 0)
@@ -172,9 +202,9 @@ while running:
         player.move_up()
     if KEY[pygame.K_s]:
         player.move_down()
-    if motion[0] >= WIDTH//2 + 10 and motion[1] >= 0:
+    if motion[0] > WIDTH//2 and motion[1] >= 0:
         player.right_mouse()
-    if motion[0] <= WIDTH//2 - 10 and motion[1] >= 0:
+    if motion[0] < WIDTH//2 - 1 and motion[1] >= 0:
         player.left_mouse()
 
     for mob in mobs_sprite.sprites():
