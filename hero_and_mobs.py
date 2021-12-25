@@ -20,22 +20,29 @@ class Hero(pygame.sprite.Sprite):
         self.health_check = True
         self.stamina_not_up = False
         self.enemy_attack = False
-        self.shield_up = False
+        self.shield_up = True
+        self.stamina_before_sheild = False
         self.update_render_player = True
 
-    def sheild_down(self):
+    def sheild_move_down(self):
+        print(self.shield_up)
         self.shield_up = False
 
-    def sheild_up(self):
+    def sheild_move_up(self):
+        print(self.shield_up)
         self.shield_up = True
-        self.shield()
+        if self.shield_up:
+            self.stamina_not_up = True
+            if self.stamina >= 40:
+                self.stamina -= PIXEL_SEC / FPS + 3
+                self.shield()
+        else:
+            self.stamina_not_up = False
 
     def shield(self):
         self.velocity *= 0.8
-        if self.stamina > 40:
-            self.health_check = False
-        if self.enemy_attack:
-            self.stamina -= 40
+        print(int(self.velocity))
+        print(self.stamina)
 
     def Heal(self):
         if self.update_render_player:
@@ -165,7 +172,7 @@ class Mob(pygame.sprite.Sprite):
 
             if self.crash > 0 and self.can_hit:
                 player.enemy_attack = True
-                if player.shield_up:
+                if player.shield_up and player.stamina >= 40:
                     player.health_check = False
                 self.can_hit = False
                 self.image = pygame.image.load(f'images/mob_left3.png')
