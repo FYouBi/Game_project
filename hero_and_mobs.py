@@ -17,7 +17,25 @@ class Hero(pygame.sprite.Sprite):
         self.velocity = SPEED
         self.stamina = ENDURANCE
         self.heal = default_HEALTH_PLAYER2
+        self.health_check = True
+        self.stamina_not_up = False
+        self.enemy_attack = False
+        self.shield_up = False
         self.update_render_player = True
+
+    def sheild_down(self):
+        self.shield_up = False
+
+    def sheild_up(self):
+        self.shield_up = True
+        self.shield()
+
+    def shield(self):
+        self.velocity *= 0.8
+        if self.stamina > 40:
+            self.health_check = False
+        if self.enemy_attack:
+            self.stamina -= 40
 
     def Heal(self):
         if self.update_render_player:
@@ -36,7 +54,8 @@ class Hero(pygame.sprite.Sprite):
                 self.stamina -= PIXEL_SEC / FPS + 0.2
 
     def up_stamina(self):
-        self.stamina += PIXEL_SEC / FPS + 0.5
+        if not self.stamina_not_up:
+            self.stamina += PIXEL_SEC / FPS + 0.5
 
     def right_mouse(self):
         if self.update_render_player:
@@ -74,7 +93,11 @@ class Hero(pygame.sprite.Sprite):
                 self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
                 for mob in mobs_sprite.sprites():
                     if pygame.sprite.collide_mask(mouse_pos, mob):
-                        mob.check_health()
+                        distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
+                                    (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
+                        if distance <= 250:
+                            print('-health_mob')
+                            mob.check_health()
 
     def check_health(self):
         if self.update_render_player:
@@ -141,9 +164,14 @@ class Mob(pygame.sprite.Sprite):
                     self.rect.y -= 1
 
             if self.crash > 0 and self.can_hit:
+                player.enemy_attack = True
+                if player.shield_up:
+                    player.health_check = False
                 self.can_hit = False
                 self.image = pygame.image.load(f'images/mob_left3.png')
-                player.check_health()
+                if not player.health_check:
+                    player.check_health()
+                player.enemy_attack = False
 
     def check_health(self):
         self.health -= default_DAMAGE_PLAYER
