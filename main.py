@@ -3,7 +3,7 @@ from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
 from cursor import cursor, trigger
-from interactive_obj import obj, coin_sprite, coi
+from interactive_obj import Coin, coin_sprite, coi
 
 
 pygame.init()
@@ -163,6 +163,13 @@ while running:
                     if player.update_render_player:
                         hit_hero_sound.play(loops=0, maxtime=0, fade_ms=12)
                 player.hit(cursor)
+            if event.button == 3:
+                print('поднял щит')
+                player.sheild_up()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 3:
+                print('опустил щит')
+                player.sheild_down()
 
         if event.type == STEP_EVENT:
             player.do_step()
@@ -248,7 +255,7 @@ while running:
             die_hero_sound.play(loops=0, maxtime=0, fade_ms=120)
 
     screen.fill(BACKGROUND)
-    obj.Coin(coin_sprite)
+    Coin.play_animation_coin(coin_sprite)
     render_all_font_HUD()
     if pygame.mouse.get_focused():
         trigger.draw(screen)
