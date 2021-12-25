@@ -163,13 +163,21 @@ while running:
                     if player.update_render_player:
                         hit_hero_sound.play(loops=0, maxtime=0, fade_ms=12)
                 player.hit(cursor)
-            if event.button == 3:
+        if M[2]:
+            if not player.stamina_before_sheild:
                 print('поднял щит')
-                player.sheild_up()
-        elif event.type == pygame.MOUSEBUTTONUP:
+                if player.stamina >= 40:
+                    player.sheild_move_up()
+            else:
+                player.stamina_before_sheild = True
+                player.stamina_not_up = False
+                if player.stamina >= ENDURANCE:
+                    player.stamina_before_sheild = False
+
+        if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
                 print('опустил щит')
-                player.sheild_down()
+                player.sheild_move_down()
 
         if event.type == STEP_EVENT:
             player.do_step()
