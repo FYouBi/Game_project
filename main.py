@@ -153,7 +153,7 @@ def render_all_font_HUD():
 while running:
     for event in pygame.event.get():
         # print(f'Выносливость: {stamina}')
-        # print(f'Скорость:{player.velocity}')
+        print(f'Скорость:{player.velocity}')
         KEY = pygame.key.get_pressed()
         M = pygame.mouse.get_pressed()
         motion = pygame.mouse.get_pos()
@@ -221,20 +221,22 @@ while running:
                 heal = True
             if event.key == pygame.K_f and not sprint:
                 block = True
+                player.velocity -= 0.5
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
                 sprint = False
             if event.key == pygame.K_q:
                 heal = False
-            if event.key == pygame.K_f:
+            if event.key == pygame.K_f and block:
                 block = False
+                player.velocity += 0.5
 
     if sprint:
         player.sprint()
     if heal:
         player.heal_up()
-    if block:
+    if block and player.stamina > 0:
         player.block = True
         player.stamina -= 0.1
     if not block and not sprint:
