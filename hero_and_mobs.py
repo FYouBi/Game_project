@@ -18,8 +18,9 @@ class Hero(pygame.sprite.Sprite):
         self.stamina = ENDURANCE
         self.heal = default_HEALTH_PLAYER2
         self.update_render_player = True
+        self.block = False
 
-    def Heal(self):
+    def heal_up(self):
         if self.update_render_player:
             if self.heal > 0:
                 if self.health < 100:
@@ -73,7 +74,7 @@ class Hero(pygame.sprite.Sprite):
                 self.stamina -= 36
                 self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
                 for mob in mobs_sprite.sprites():
-                    if pygame.sprite.collide_mask(mouse_pos, mob):
+                    if pygame.sprite.collide_mask(mouse_pos, mob) and pygame.sprite.collide_mask(self, mob):
                         mob.check_health()
 
     def check_health(self):
@@ -143,7 +144,8 @@ class Mob(pygame.sprite.Sprite):
             if self.crash > 0 and self.can_hit:
                 self.can_hit = False
                 self.image = pygame.image.load(f'images/mob_left3.png')
-                player.check_health()
+                if not player.block:
+                    player.check_health()
 
     def check_health(self):
         self.health -= default_DAMAGE_PLAYER

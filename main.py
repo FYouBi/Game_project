@@ -39,6 +39,7 @@ camera = Camera()
 bar = False
 running = True
 sprint = False
+block = False
 font_size_Died = 30
 width_batery_color = 0
 stamina = ENDURANCE
@@ -54,8 +55,11 @@ count_souls = 0
 
 def render_all_font_HUD():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
+
+    coin_sprite.draw(screen)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
+
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
     text_background = font_count_coin.render(f'{count_souls}', True, WHITE)
     pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 180, HEIGHT - 50, 160, 30))
@@ -122,29 +126,28 @@ def render_all_font_HUD():
     screen.blit(text, (173, -3))
 
     FPS_LOOK = str(int(clock.get_fps()))
-    render = font_FPS.render(FPS_LOOK, 0, (0, 255, 0))
+    render = font_FPS.render(FPS_LOOK, False, (0, 255, 0))
     screen.blit(render, (15, HEIGHT - 40))
 
     if not player.update_render_player:
         if int(font_size_Died) <= 100:
             font_size_Died += PIXEL_SEC / FPS + 0.6
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
-            render_die = font_died.render('Ты умер', 0, BLACK)
+            render_die = font_died.render('Ты умер', False, BLACK)
             screen.blit(render_die, (230, HEIGHT // 2 - 100))
 
             font_size_Died += PIXEL_SEC / FPS + 0.6
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
-            render_die = font_died.render('Ты умер', 0, CRIMSON)
+            render_die = font_died.render('Ты умер', False, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 2 - 100))
         else:
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
-            render_die = font_died.render('Ты умер', 0, BLACK)
+            render_die = font_died.render('Ты умер', False, BLACK)
             screen.blit(render_die, (230, HEIGHT // 2 - 100))
 
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
-            render_die = font_died.render('Ты умер', 0, CRIMSON)
+            render_die = font_died.render('Ты умер', False, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 2 - 100))
-    coin_sprite.draw(screen)
 
 
 while running:
@@ -203,7 +206,7 @@ while running:
                 bar = True
                 ABILITY = False
                 player.the_world()
-                pygame.time.set_timer(ABILITY_TIME, 3000)
+                pygame.time.set_timer(ABILITY_TIME, 3200)
 
         if bar:
             player.velocity *= 0.7
@@ -212,24 +215,31 @@ while running:
                 player.velocity = SPEED
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LSHIFT:
+            if event.key == pygame.K_LSHIFT and not block:
                 sprint = True
             if event.key == pygame.K_q:
                 heal = True
+            if event.key == pygame.K_f and not sprint:
+                block = True
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
                 sprint = False
             if event.key == pygame.K_q:
                 heal = False
+            if event.key == pygame.K_f:
+                block = False
 
     if sprint:
         player.sprint()
-    else:
+    if heal:
+        player.heal_up()
+    if block:
+        player.block = True
+        player.stamina -= 0.1
+    if not block and not sprint:
         if player.stamina < 160:
             player.up_stamina()
-    if heal:
-        player.Heal()
 
     if KEY[pygame.K_d]:
         player.move_right()
