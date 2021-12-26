@@ -3,6 +3,7 @@ from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
 from cursor import cursor, trigger
+from interactive_obj import Coin, coin_sprite, coin
 
 
 pygame.init()
@@ -44,14 +45,34 @@ stamina = ENDURANCE
 auto_aim = 0
 dict_of_distance = {}
 sorted_keys = None
+die_hero_sound = pygame.mixer.Sound('sounds/health/player/dead.wav')
+hit_hero_sound = pygame.mixer.Sound('sounds/health/player/hit.wav')
+play_sounder = 0
+heal = False
+count_souls = 0
 
 
 def render_all_font_HUD():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
+    font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
+    text_background = font_count_coin.render(f'{count_souls}', True, WHITE)
+    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 180, HEIGHT - 50, 160, 30))
+    screen.blit(text_background, (WIDTH - 185, HEIGHT - 63))
+
+    # Отрисовка востановления здоровья
+    pygame.draw.rect(screen, DARK_GREEN, (11, 68, 100, 10))
+    pygame.draw.rect(screen, GREEN, (6, 65, player.heal, 10))
+
+    # Отрисовка стамины
+    pygame.draw.rect(screen, DARK_BLUE, (11, 50, 160, 10))
+    pygame.draw.rect(screen, LIGHT_BLUE, (6, 45, player.stamina, 10))
+
+    # Частичная отрисовка батареии
     pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 130, 30), 10)
     pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 128, 23))
+
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
     if player.update_render_player:
@@ -65,15 +86,16 @@ def render_all_font_HUD():
             else:
                 bar = False
 
+    # Отрисовка батареи
     pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 170, 5, width_batery_color, 30))
     pygame.draw.rect(screen, SILVER, (WIDTH - 41, 10, 10, 20))
     pygame.draw.rect(screen, BLACK, (WIDTH - 170, 5, 130, 30), 4)
     pygame.draw.rect(screen, BLACK, (WIDTH - 41,  10, 10, 20), 4)
+
+    # Отрисовка тени хп
     pygame.draw.rect(screen, CRIMSON, (10, 10, 160, 30))
 
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 990, 40, 160, 10))
-    pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 990, 40, player.stamina, 10))
-
+    # Отрисовка здоровья
     for i in range(player.health):
         kf = 5 + 20 * (i // 13)
         yellow_kf = 24 + 20 * (i // 13)
@@ -105,14 +127,24 @@ def render_all_font_HUD():
 
     if not player.update_render_player:
         if int(font_size_Died) <= 100:
-            font_size_Died += PIXEL_SEC / FPS + 1
+            font_size_Died += PIXEL_SEC / FPS + 0.6
+            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
+            render_die = font_died.render('Ты умер', 0, BLACK)
+            screen.blit(render_die, (230, HEIGHT // 2 - 100))
+
+            font_size_Died += PIXEL_SEC / FPS + 0.6
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
             render_die = font_died.render('Ты умер', 0, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 2 - 100))
         else:
+            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
+            render_die = font_died.render('Ты умер', 0, BLACK)
+            screen.blit(render_die, (230, HEIGHT // 2 - 100))
+
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
             render_die = font_died.render('Ты умер', 0, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 2 - 100))
+    coin_sprite.draw(screen)
 
 
 while running:
@@ -131,12 +163,15 @@ while running:
         if event.type == pygame.MOUSEMOTION and not cursor.have_target:
             cursor.rect.topleft = event.pos
 
-        elif M[0]:
-            player.hit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 2:
                 cursor.change_aim()
                 auto_aim = cursor.aim
+            if event.button == 1:
+                if player.stamina >= 36:
+                    if player.update_render_player:
+                        hit_hero_sound.play(loops=0, maxtime=0, fade_ms=12)
+                player.hit(cursor)
 
         if event.type == STEP_EVENT:
             player.do_step()
@@ -145,14 +180,14 @@ while running:
             for mob in mobs_sprite.sprites():
                 mob.can_hit = True
 
-        if event.type == UP_HEALTH_EVENT:
-            if player.update_render_player:
-                if player.health < default_HEALTH_PLAYER:
-                    if player.health + 12 > default_HEALTH_PLAYER:
-                        player.health += default_HEALTH_PLAYER - player.health
-                    else:
-                        player.health += 12
-                    pygame.time.set_timer(UP_HEALTH_EVENT, KD)
+        # if event.type == UP_HEALTH_EVENT:
+        #     if player.update_render_player:
+        #         if player.health < default_HEALTH_PLAYER:
+        #             if player.health + 12 > default_HEALTH_PLAYER:
+        #                 player.health += default_HEALTH_PLAYER - player.health
+        #             else:
+        #                 player.health += 12
+        #             pygame.time.set_timer(UP_HEALTH_EVENT, KD)
 
         if event.type == ABILITY_READY:
             ABILITY = True
@@ -179,16 +214,22 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LSHIFT:
                 sprint = True
+            if event.key == pygame.K_q:
+                heal = True
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LSHIFT:
                 sprint = False
+            if event.key == pygame.K_q:
+                heal = False
 
     if sprint:
         player.sprint()
     else:
         if player.stamina < 160:
             player.up_stamina()
+    if heal:
+        player.Heal()
 
     if KEY[pygame.K_d]:
         player.move_right()
@@ -202,23 +243,18 @@ while running:
         player.right_mouse()
     if motion[0] < WIDTH//2 - 1 and motion[1] >= 0:
         player.left_mouse()
+
     for mob in mobs_sprite.sprites():
         distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
                     (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
-        if auto_aim and distance <= 450:
-            mob_rect = mob.rect.copy()
-            dict_of_distance[distance] = mob_rect
-            cursor.have_target = True
-        else:
-            dict_of_distance = {}
-            cursor.have_target = False
-        sorted_keys = sorted(dict_of_distance, key=dict_of_distance.get, reverse=True)
         if distance <= 450:
             mob.run()
 
-    if auto_aim and dict_of_distance:
-        print(auto_aim, dict_of_distance[sorted_keys[0]])
-        cursor.rect = dict_of_distance[sorted_keys[0]]
+    if not player.update_render_player:
+        if play_sounder == 0:
+            play_sounder = 1
+            die_hero_sound.set_volume(0.4)
+            die_hero_sound.play(loops=0, maxtime=0, fade_ms=120)
 
     screen.fill(BACKGROUND)
     render_all_font_HUD()
@@ -228,6 +264,8 @@ while running:
     for sprite in hero_sprite:
         camera.apply(sprite)
     for sprite in mobs_sprite:
+        camera.apply(sprite)
+    for sprite in coin_sprite:
         camera.apply(sprite)
     clock.tick(FPS)
     pygame.display.flip()

@@ -2,6 +2,7 @@ import random
 import pygame
 from pygame.sprite import AbstractGroup
 from settings import *
+from Sound_effect import Sound
 
 
 class Hero(pygame.sprite.Sprite):
@@ -14,8 +15,16 @@ class Hero(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
-        self.stamina = 160
+        self.stamina = ENDURANCE
+        self.heal = default_HEALTH_PLAYER2
         self.update_render_player = True
+
+    def Heal(self):
+        if self.update_render_player:
+            if self.heal > 0:
+                if self.health < 100:
+                    self.health += 1
+                    self.heal -= PIXEL_SEC / FPS + 1
 
     def sprint(self):
         if self.update_render_player:
@@ -25,8 +34,6 @@ class Hero(pygame.sprite.Sprite):
                 elif self.velocity <= SPEED:
                     self.velocity *= 1.5
                 self.stamina -= PIXEL_SEC / FPS + 0.2
-            else:
-                self.velocity = SPEED
 
     def up_stamina(self):
         self.stamina += PIXEL_SEC / FPS + 0.5
@@ -60,12 +67,14 @@ class Hero(pygame.sprite.Sprite):
             self.image = pygame.image.load(f'images/hero_default_{self.way}_step_{self.step_count}.png')
             self.step_count += 1 if self.step_count == 1 else -1
 
-    def hit(self):
+    def hit(self, mouse_pos):
         if self.update_render_player:
-            self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
-            for mob in mobs_sprite.sprites():
-                if pygame.sprite.collide_mask(self, mob):
-                    mob.check_health()
+            if self.stamina >= 36:
+                self.stamina -= 36
+                self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+                for mob in mobs_sprite.sprites():
+                    if pygame.sprite.collide_mask(mouse_pos, mob):
+                        mob.check_health()
 
     def check_health(self):
         if self.update_render_player:
@@ -82,7 +91,7 @@ class Hero(pygame.sprite.Sprite):
 class Mob(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/mob_right.png')
+        self.image = pygame.image.load(f'images/mob_right1.png')
         self.spawn = (random.randrange(WIDTH // 2, WIDTH - 100), random.randrange(100, HEIGHT - 100))
         self.step_count = 1
         self.can_hit = True
@@ -111,10 +120,10 @@ class Mob(pygame.sprite.Sprite):
             if self.can_hit:
                 if self.hero_pos[0] < self.rect.x - 1:
                     self.rect.x -= 1
-                    self.image = pygame.image.load(f'images/mob_left.png')
+                    self.image = pygame.image.load(f'images/mob_left1.png')
                 if self.hero_pos[0] > self.rect.x - 1:
                     self.rect.x += 1
-                    self.image = pygame.image.load(f'images/mob_right.png')
+                    self.image = pygame.image.load(f'images/mob_right1.png')
                 if self.hero_pos[1] < self.rect.y - 1:
                     self.rect.y -= 1
                 if self.hero_pos[1] > self.rect.y - 1:
@@ -122,10 +131,10 @@ class Mob(pygame.sprite.Sprite):
             else:
                 if self.hero_pos[0] < self.rect.x - 1:
                     self.rect.x += 1
-                    self.image = pygame.image.load(f'images/mob_right.png')
+                    self.image = pygame.image.load(f'images/mob_right1.png')
                 if self.hero_pos[0] > self.rect.x - 1:
                     self.rect.x -= 1
-                    self.image = pygame.image.load(f'images/mob_left.png')
+                    self.image = pygame.image.load(f'images/mob_left1.png')
                 if self.hero_pos[1] < self.rect.y - 1:
                     self.rect.y += 1
                 if self.hero_pos[1] > self.rect.y - 1:
