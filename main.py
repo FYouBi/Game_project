@@ -3,7 +3,7 @@ from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
 from cursor import cursor, trigger
-from interactive_obj import Coin, coin_sprite, coin
+from interactive_obj import coin_sprite
 
 
 pygame.init()
@@ -30,6 +30,9 @@ pygame.time.set_timer(FROZEN, 4000)
 endurance = pygame.USEREVENT + 7
 pygame.time.set_timer(endurance, 1000)
 
+COIN_FLIP = pygame.USEREVENT + 8
+pygame.time.set_timer(COIN_FLIP, 150)
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 pygame.mouse.set_visible(False)
@@ -46,11 +49,11 @@ stamina = ENDURANCE
 auto_aim = 0
 dict_of_distance = {}
 sorted_keys = None
-die_hero_sound = pygame.mixer.Sound('sounds/health/player/dead.wav')
-hit_hero_sound = pygame.mixer.Sound('sounds/health/player/hit.wav')
+die_hero_sound = pygame.mixer.Sound('sounds/dead.wav')
+hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
 play_sounder = 0
 heal = False
-count_souls = 0
+count_coins = 0
 
 
 def render_all_font_HUD():
@@ -61,8 +64,7 @@ def render_all_font_HUD():
     mobs_sprite.draw(screen)
 
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
-    text_background = font_count_coin.render(f'{count_souls}', True, WHITE)
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 180, HEIGHT - 50, 160, 30))
+    text_background = font_count_coin.render(f'{count_coins}', True, WHITE)
     screen.blit(text_background, (WIDTH - 185, HEIGHT - 63))
 
     # Отрисовка востановления здоровья
@@ -183,6 +185,10 @@ while running:
             for mob in mobs_sprite.sprites():
                 mob.can_hit = True
 
+        if event.type == COIN_FLIP:
+            for sprite in coin_sprite:
+                sprite.update()
+
         # if event.type == UP_HEALTH_EVENT:
         #     if player.update_render_player:
         #         if player.health < default_HEALTH_PLAYER:
@@ -201,13 +207,6 @@ while running:
             pygame.time.set_timer(ABILITY_READY, 3000)
             player.the_world()
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_x and ABILITY:
-                bar = True
-                ABILITY = False
-                player.the_world()
-                pygame.time.set_timer(ABILITY_TIME, 3200)
-
         if bar:
             player.velocity *= 0.7
         else:
@@ -215,6 +214,11 @@ while running:
                 player.velocity = SPEED
 
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_x and ABILITY:
+                bar = True
+                ABILITY = False
+                player.the_world()
+                pygame.time.set_timer(ABILITY_TIME, 3200)
             if event.key == pygame.K_LSHIFT and not block:
                 sprint = True
             if event.key == pygame.K_q:
@@ -230,6 +234,7 @@ while running:
                 heal = False
             if event.key == pygame.K_f and block:
                 block = False
+                player.block = False
                 player.velocity += 0.5
 
     if sprint:
@@ -256,11 +261,14 @@ while running:
     if motion[0] < WIDTH//2 - 1 and motion[1] >= 0:
         player.left_mouse()
 
+    count_coins = player.check_collide_with_coin()
+
     for mob in mobs_sprite.sprites():
         distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
                     (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
         if distance <= 450:
-            mob.run()
+            pass
+            # mob.run()
 
     if not player.update_render_player:
         if play_sounder == 0:

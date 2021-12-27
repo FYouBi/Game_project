@@ -1,8 +1,10 @@
 import random
 import pygame
 from pygame.sprite import AbstractGroup
+
+import interactive_obj
 from settings import *
-from Sound_effect import Sound
+from interactive_obj import coin_sprite
 
 
 class Hero(pygame.sprite.Sprite):
@@ -11,6 +13,7 @@ class Hero(pygame.sprite.Sprite):
         self.image = pygame.image.load(f'images/hero_default_right.png')
         self.mask = pygame.mask.from_surface(self.image)
         self.step_count = 1
+        self.coin_count = 0
         self.way = 'right'
         self.rect = self.image.get_rect()
         self.health = default_HEALTH_PLAYER
@@ -76,6 +79,13 @@ class Hero(pygame.sprite.Sprite):
                 for mob in mobs_sprite.sprites():
                     if pygame.sprite.collide_mask(mouse_pos, mob) and pygame.sprite.collide_mask(self, mob):
                         mob.check_health()
+
+    def check_collide_with_coin(self):
+        for sprite in coin_sprite:
+            if pygame.sprite.collide_mask(sprite, self):
+                self.coin_count += 1
+                coin_sprite.remove(sprite)
+        return self.coin_count
 
     def check_health(self):
         if self.update_render_player:
@@ -150,6 +160,7 @@ class Mob(pygame.sprite.Sprite):
     def check_health(self):
         self.health -= default_DAMAGE_PLAYER
         if self.health <= 0:
+            interactive_obj.spawn_coin((self.rect.centerx, self.rect.centery))
             mobs_sprite.remove(self)
 
     def freeze_func(self):
