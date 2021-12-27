@@ -39,6 +39,9 @@ class Hero(pygame.sprite.Sprite):
                     self.velocity *= 1.5
                 self.stamina -= PIXEL_SEC / FPS + 0.2
 
+    def velocity_dawn(self):
+        self.velocity = SPEED
+
     def up_stamina(self):
         self.stamina += PIXEL_SEC / FPS + 0.5
 

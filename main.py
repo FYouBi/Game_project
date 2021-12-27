@@ -24,9 +24,6 @@ ABILITY = False
 ABILITY_TIME = pygame.USEREVENT + 5
 pygame.time.set_timer(ABILITY_TIME, 0)
 
-FROZEN = pygame.USEREVENT + 6
-pygame.time.set_timer(FROZEN, 4000)
-
 endurance = pygame.USEREVENT + 7
 pygame.time.set_timer(endurance, 1000)
 
@@ -51,6 +48,8 @@ dict_of_distance = {}
 sorted_keys = None
 die_hero_sound = pygame.mixer.Sound('sounds/dead.wav')
 hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
+the_world = pygame.mixer.Sound('sounds/the_world.wav')
+time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
 heal = False
 count_coins = 0
@@ -88,7 +87,7 @@ def render_all_font_HUD():
         if bar:
             if width_batery_color >= 0:
                 if player.update_render_player:
-                    width_batery_color -= PIXEL_SEC / FPS + 0.2
+                    width_batery_color -= PIXEL_SEC / FPS + 0.1
             else:
                 bar = False
 
@@ -175,6 +174,7 @@ while running:
             if event.button == 1:
                 if player.stamina >= 36:
                     if player.update_render_player:
+                        hit_hero_sound.set_volume(0.2)
                         hit_hero_sound.play(loops=0, maxtime=0, fade_ms=12)
                 player.hit(cursor)
 
@@ -205,20 +205,21 @@ while running:
         if event.type == ABILITY_TIME:
             pygame.time.set_timer(ABILITY_TIME, 0)
             pygame.time.set_timer(ABILITY_READY, 3000)
+            time_resume.set_volume(0.2)
+            time_resume.play(loops=0, maxtime=0, fade_ms=120)
             player.the_world()
-
-        if bar:
-            player.velocity *= 0.7
-        else:
-            if event.type == FROZEN:
-                player.velocity = SPEED
+            player.velocity = SPEED
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_x and ABILITY:
                 bar = True
                 ABILITY = False
                 player.the_world()
-                pygame.time.set_timer(ABILITY_TIME, 3200)
+                the_world.set_volume(0.2)
+                the_world.play(loops=0, maxtime=0, fade_ms=120)
+                pygame.time.set_timer(ABILITY_TIME, 5300)
+                player.velocity *= 0.3
+
             if event.key == pygame.K_LSHIFT and not block:
                 sprint = True
             if event.key == pygame.K_q:
@@ -239,6 +240,8 @@ while running:
 
     if sprint:
         player.sprint()
+    else:
+        player.velocity_dawn()
     if heal:
         player.heal_up()
     if block and player.stamina > 0:
@@ -247,7 +250,6 @@ while running:
     if not block and not sprint:
         if player.stamina < 160:
             player.up_stamina()
-
     if KEY[pygame.K_d]:
         player.move_right()
     if KEY[pygame.K_a]:
@@ -268,7 +270,7 @@ while running:
                     (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
         if distance <= 450:
             pass
-            # mob.run()
+            mob.run()
 
     if not player.update_render_player:
         if play_sounder == 0:
