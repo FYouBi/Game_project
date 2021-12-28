@@ -1,4 +1,6 @@
-WIDTH, HEIGHT = 1000, 700
+from win32api import GetSystemMetrics
+
+WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 FPS = 144
 SPEED = 1.5
 PIXEL_SEC = 10

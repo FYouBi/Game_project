@@ -4,6 +4,10 @@ from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
 from cursor import cursor, trigger
 from interactive_obj import coin_sprite
+from win32api import GetSystemMetrics
+
+print("Width =", GetSystemMetrics(0))
+print("Height =", GetSystemMetrics(1))
 
 
 pygame.init()
@@ -53,6 +57,12 @@ time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
 heal = False
 count_coins = 0
+pause = False
+confirmation_exit = False
+select_button_options = 0
+buttons_option = ['resume', 'exit']
+resume_color = [DARK_GREEN, GREEN]
+exit_color = [CRIMSON, RED]
 
 
 def render_all_font_HUD():
@@ -80,16 +90,17 @@ def render_all_font_HUD():
 
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
-    if player.update_render_player:
-        if ABILITY:
-            if width_batery_color <= 130:
-                width_batery_color += PIXEL_SEC / FPS + 3
-        if bar:
-            if width_batery_color >= 0:
-                if player.update_render_player:
-                    width_batery_color -= PIXEL_SEC / FPS + 0.1
-            else:
-                bar = False
+    if not player.pause:
+        if player.update_render_player:
+            if ABILITY:
+                if width_batery_color <= 130:
+                    width_batery_color += PIXEL_SEC / FPS + 3
+            if bar:
+                if width_batery_color >= 0:
+                    if player.update_render_player:
+                        width_batery_color -= PIXEL_SEC / FPS + 0.1
+                else:
+                    bar = False
 
     # Отрисовка батареи
     pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 170, 5, width_batery_color, 30))
@@ -131,38 +142,75 @@ def render_all_font_HUD():
     screen.blit(render, (15, HEIGHT - 40))
 
     if not player.update_render_player:
-        if int(font_size_Died) <= 100:
-            font_size_Died += PIXEL_SEC / FPS + 0.6
+        if int(font_size_Died) <= WIDTH//6:
+            font_size_Died += PIXEL_SEC / FPS + 0.8
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
             render_die = font_died.render('Ты умер', False, BLACK)
-            screen.blit(render_die, (230, HEIGHT // 2 - 100))
+            screen.blit(render_die, (230, HEIGHT // 3))
 
             font_size_Died += PIXEL_SEC / FPS + 0.6
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
             render_die = font_died.render('Ты умер', False, CRIMSON)
-            screen.blit(render_die, (250, HEIGHT // 2 - 100))
+            screen.blit(render_die, (250, HEIGHT // 3))
         else:
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
             render_die = font_died.render('Ты умер', False, BLACK)
-            screen.blit(render_die, (230, HEIGHT // 2 - 100))
+            screen.blit(render_die, (230, HEIGHT // 3))
 
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
             render_die = font_died.render('Ты умер', False, CRIMSON)
-            screen.blit(render_die, (250, HEIGHT // 2 - 100))
+            screen.blit(render_die, (250, HEIGHT // 3))
+    if player.pause:
+
+        font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
+        text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[0])
+        screen.blit(text, (WIDTH // 2 - 210, HEIGHT // 2 - 95))
+
+        font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
+        text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[1])
+        screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2 - 100))
+
+        font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
+        text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[0])
+        screen.blit(text, (WIDTH // 2 - 210, HEIGHT // 2 + 5))
+
+        font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
+        text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[1])
+        screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2))
 
 
 while running:
     for event in pygame.event.get():
-        # print(f'Выносливость: {stamina}')
-        print(f'Скорость:{player.velocity}')
         KEY = pygame.key.get_pressed()
         M = pygame.mouse.get_pressed()
         motion = pygame.mouse.get_pos()
 
         if event.type == pygame.QUIT:
             running = False
-        if KEY[pygame.K_ESCAPE]:
-            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s and player.pause:
+                select_button_options += 1
+                if select_button_options > 1:
+                    select_button_options = 0
+            elif event.key == pygame.K_w and player.pause:
+                select_button_options -= 1
+                if select_button_options < 0:
+                    select_button_options = 1
+            if select_button_options == 0:
+                resume_color = [DARK_GREEN, GREEN]
+                exit_color = [CRIMSON, RED]
+            else:
+                exit_color = [DARK_GREEN, GREEN]
+                resume_color = [CRIMSON, RED]
+            if event.key == pygame.K_e and player.pause:
+                if buttons_option[select_button_options] == 'exit':
+                    running = False
+                if buttons_option[select_button_options] == 'resume':
+                    player.pause = False
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                player.paus()
 
         if event.type == pygame.MOUSEMOTION and not cursor.have_target:
             cursor.rect.topleft = event.pos
@@ -171,38 +219,29 @@ while running:
             if event.button == 2:
                 cursor.change_aim()
                 auto_aim = cursor.aim
-            if event.button == 1:
+            if event.button == 1 and not player.pause:
                 if player.stamina >= 36:
                     if player.update_render_player:
                         hit_hero_sound.set_volume(0.2)
                         hit_hero_sound.play(loops=0, maxtime=0, fade_ms=12)
                 player.hit(cursor)
 
-        if event.type == STEP_EVENT:
+        if event.type == STEP_EVENT and not player.pause:
             player.do_step()
 
-        if event.type == HIT_EVENT:
+        if event.type == HIT_EVENT and not player.pause:
             for mob in mobs_sprite.sprites():
                 mob.can_hit = True
 
-        if event.type == COIN_FLIP:
+        if event.type == COIN_FLIP and not player.pause:
             for sprite in coin_sprite:
                 sprite.update()
 
-        # if event.type == UP_HEALTH_EVENT:
-        #     if player.update_render_player:
-        #         if player.health < default_HEALTH_PLAYER:
-        #             if player.health + 12 > default_HEALTH_PLAYER:
-        #                 player.health += default_HEALTH_PLAYER - player.health
-        #             else:
-        #                 player.health += 12
-        #             pygame.time.set_timer(UP_HEALTH_EVENT, KD)
-
-        if event.type == ABILITY_READY:
+        if event.type == ABILITY_READY and not player.pause:
             ABILITY = True
             pygame.time.set_timer(ABILITY_READY, 0)
 
-        if event.type == ABILITY_TIME:
+        if event.type == ABILITY_TIME and not player.pause:
             pygame.time.set_timer(ABILITY_TIME, 0)
             pygame.time.set_timer(ABILITY_READY, 3000)
             time_resume.set_volume(0.2)
@@ -210,7 +249,7 @@ while running:
             player.the_world()
             player.velocity = SPEED
 
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and not player.pause:
             if event.key == pygame.K_x and ABILITY:
                 bar = True
                 ABILITY = False
@@ -220,7 +259,7 @@ while running:
                 pygame.time.set_timer(ABILITY_TIME, 5300)
                 player.velocity *= 0.3
 
-            if event.key == pygame.K_LSHIFT and not block:
+            if event.key == pygame.K_LSHIFT and not block and not player.pause:
                 sprint = True
             if event.key == pygame.K_q:
                 heal = True
@@ -228,7 +267,7 @@ while running:
                 block = True
                 player.velocity -= 0.5
 
-        if event.type == pygame.KEYUP:
+        if event.type == pygame.KEYUP and not player.pause:
             if event.key == pygame.K_LSHIFT:
                 sprint = False
             if event.key == pygame.K_q:
@@ -260,7 +299,7 @@ while running:
         player.move_down()
     if motion[0] > WIDTH//2 and motion[1] >= 0:
         player.right_mouse()
-    if motion[0] < WIDTH//2 - 1 and motion[1] >= 0:
+    if motion[0] < WIDTH//2 - 5 and motion[1] >= 0:
         player.left_mouse()
 
     count_coins = player.check_collide_with_coin()
@@ -268,8 +307,7 @@ while running:
     for mob in mobs_sprite.sprites():
         distance = ((int(player.rect.centerx) - int(mob.rect.centerx)) ** 2 +
                     (int(player.rect.centery) - int(mob.rect.centery)) ** 2) ** 0.5
-        if distance <= 450:
-            pass
+        if distance <= WIDTH//3 + 10:
             mob.run()
 
     if not player.update_render_player:
