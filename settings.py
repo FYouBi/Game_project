@@ -1,4 +1,6 @@
-WIDTH, HEIGHT = 1000, 700
+from win32api import GetSystemMetrics
+
+WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 FPS = 144
 SPEED = 1.5
 PIXEL_SEC = 10
@@ -12,6 +14,7 @@ WHITE = 255, 255, 255
 BLACK = 0, 0, 0
 RED = 255, 0, 0
 GREEN = 0, 255, 0
+DARK_GREEN = 0, 155, 0
 BLUE = 0, 0, 255
 LIGHT_BLUE = 60, 170, 255
 DARK_BLUE = 0, 33, 55
@@ -23,7 +26,7 @@ BACKGROUND = 69, 68, 89
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
 default_DAMAGE_PLAYER = 14
 default_DAMAGE_MOB = 17
-default_HEALTH_MOB = 84
+default_HEALTH_MOB = 56
 default_HEALTH_PLAYER = 100
 ENDURANCE = 160
 default_HEALTH_PLAYER2 = 100
