@@ -1,30 +1,25 @@
 import pygame
 from pygame.sprite import AbstractGroup
-from hero_and_mobs import player
+
+
+def spawn_coin(pos):
+    Coin(pos, coin_sprite)
 
 
 class Coin(pygame.sprite.Sprite):
-    def __init__(self, *groups: AbstractGroup):
+    def __init__(self, pos, *groups: AbstractGroup):
         super().__init__(*groups)
         self.fl = False
         self.frame = 1
+        self.count = 0
         self.image = pygame.image.load(f'images/coin{self.frame}.png')
         self.coin_mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = 100, 100
+        self.rect.centerx, self.rect.centery = pos
 
-    def play_animation_coin(self):
-        self.frame = 1
-        self.fl = False
-        if 4 >= self.frame >= 1 and not self.fl:
-            self.frame += 1
-            if self.frame == 4:
-                self.fl = True
-        elif self.fl:
-            self.fl -= 1
-            if self.frame == 1:
-                self.fl = False
+    def update(self):
+        self.frame += 1 if self.frame < 6 else -5
+        self.image = pygame.image.load(f'images/coin{self.frame}.png')
 
 
 coin_sprite = pygame.sprite.Group()
-coi = Coin(coin_sprite)
