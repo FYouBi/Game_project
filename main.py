@@ -1,4 +1,6 @@
 import pygame
+
+import interactive_obj
 from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
@@ -9,7 +11,7 @@ from win32api import GetSystemMetrics
 print("Width =", GetSystemMetrics(0))
 print("Height =", GetSystemMetrics(1))
 
-
+pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
 
 STEP_EVENT = pygame.USEREVENT + 1
@@ -60,17 +62,26 @@ count_coins = 0
 pause = False
 confirmation_exit = False
 select_button_options = 0
+bg = pygame.image.load(f'images/fon.png')
+bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
-resume_color = [DARK_GREEN, GREEN]
-exit_color = [CRIMSON, RED]
+resume_color = [CRIMSON, RED]
+exit_color = [DARK_GREEN, GREEN]
 
 
 def render_all_font_HUD():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
 
+    screen.blit(bg, (0, 0))
+    interactive_obj.dirt.draw(screen)
+    interactive_obj.ground.draw(screen)
     coin_sprite.draw(screen)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
+
+    font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
+    text_background = font_count_coin.render(f'{count_coins}', True, GRAY)
+    screen.blit(text_background, (WIDTH - 180, HEIGHT - 63))
 
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
     text_background = font_count_coin.render(f'{count_coins}', True, WHITE)
@@ -92,13 +103,13 @@ def render_all_font_HUD():
 
     if not player.pause:
         if player.update_render_player:
-            if ABILITY:
+            if not bar:
                 if width_batery_color <= 130:
-                    width_batery_color += PIXEL_SEC / FPS + 3
+                    width_batery_color += PIXEL_SEC / FPS + 0.084
             if bar:
                 if width_batery_color >= 0:
                     if player.update_render_player:
-                        width_batery_color -= PIXEL_SEC / FPS + 0.1
+                        width_batery_color -= PIXEL_SEC / FPS + 0.7
                 else:
                     bar = False
 
@@ -161,6 +172,7 @@ def render_all_font_HUD():
             render_die = font_died.render('Ты умер', False, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 3))
     if player.pause:
+        # screen.blit(pygame.image.load(f'images/ground.png'), (0, 0))
 
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[0])
@@ -196,17 +208,19 @@ while running:
                 select_button_options -= 1
                 if select_button_options < 0:
                     select_button_options = 1
-            if select_button_options == 0:
-                resume_color = [DARK_GREEN, GREEN]
-                exit_color = [CRIMSON, RED]
-            else:
-                exit_color = [DARK_GREEN, GREEN]
-                resume_color = [CRIMSON, RED]
+
+            # if select_button_options == 0:
+            #     resume_color = [DARK_GREEN, GREEN]
+            #     exit_color = [CRIMSON, RED]
+            # else:
+            #     exit_color = [DARK_GREEN, GREEN]
+            #     resume_color = [CRIMSON, RED]
             if event.key == pygame.K_e and player.pause:
                 if buttons_option[select_button_options] == 'exit':
                     running = False
                 if buttons_option[select_button_options] == 'resume':
                     player.pause = False
+            resume_color, exit_color = exit_color, resume_color
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -293,10 +307,12 @@ while running:
         player.move_right()
     if KEY[pygame.K_a]:
         player.move_left()
-    if KEY[pygame.K_w]:
-        player.move_up()
-    if KEY[pygame.K_s]:
-        player.move_down()
+    # if KEY[pygame.K_w]:
+    #     player.move_up()
+    # if KEY[pygame.K_s]:
+    #     player.move_down()
+    if KEY[pygame.K_SPACE]:
+        player.jump()
     if motion[0] > WIDTH//2 and motion[1] >= 0:
         player.right_mouse()
     if motion[0] < WIDTH//2 - 5 and motion[1] >= 0:
@@ -316,7 +332,6 @@ while running:
             die_hero_sound.set_volume(0.4)
             die_hero_sound.play(loops=0, maxtime=0, fade_ms=120)
 
-    screen.fill(BACKGROUND)
     render_all_font_HUD()
     if pygame.mouse.get_focused():
         trigger.draw(screen)
@@ -326,6 +341,10 @@ while running:
     for sprite in mobs_sprite:
         camera.apply(sprite)
     for sprite in coin_sprite:
+        camera.apply(sprite)
+    for sprite in interactive_obj.ground:
+        camera.apply(sprite)
+    for sprite in interactive_obj.dirt:
         camera.apply(sprite)
     clock.tick(FPS)
     pygame.display.flip()

@@ -1,5 +1,8 @@
+from settings import *
 import pygame
 from pygame.sprite import AbstractGroup
+
+kill = True
 
 
 def spawn_coin(pos):
@@ -22,4 +25,38 @@ class Coin(pygame.sprite.Sprite):
         self.image = pygame.image.load(f'images/coin{self.frame}.png')
 
 
+class Ground(pygame.sprite.Sprite):
+    def __init__(self, pos, *groups: AbstractGroup):
+        super().__init__(*groups)
+        self.image = pygame.image.load(f'images/crow-export.png')
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.centerx, self.rect.centery = pos, 100
+
+
+class Dirt(pygame.sprite.Sprite):
+    def __init__(self, pos, *groups: AbstractGroup):
+        super().__init__(*groups)
+        self.image = pygame.image.load(f'images/gryaz-export.png')
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.centerx, self.rect.centery = pos
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+
+screen_rect = (0, 0, WIDTH, HEIGHT)
+x = -880
+y = 193
+dirt = pygame.sprite.Group()
+ground = pygame.sprite.Group()
+while kill:
+    Ground(x, ground)
+    Dirt((x, y), dirt)
+    x += 80
+    if x == 1200:
+        kill = False
+        x = 0
+    else:
+        kill = True
 coin_sprite = pygame.sprite.Group()
