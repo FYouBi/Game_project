@@ -24,6 +24,9 @@ class Hero(pygame.sprite.Sprite):
         self.pause = False
         self.block = False
 
+    def jump(self):
+        print('прыг-прыг')
+
     def paus(self):
         self.pause = not self.pause
 
@@ -73,15 +76,15 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
-    def move_up(self):
-        if not self.pause:
-            if self.update_render_player:
-                self.rect.y -= self.velocity + 1
-
-    def move_down(self):
-        if not self.pause:
-            if self.update_render_player:
-                self.rect.y += self.velocity + 1
+    # def move_up(self):
+    #     if not self.pause:
+    #         if self.update_render_player:
+    #             self.rect.y -= self.velocity + 1
+    #
+    # def move_down(self):
+    #     if not self.pause:
+    #         if self.update_render_player:
+    #             self.rect.y += self.velocity + 1
 
     def do_step(self):
         if not self.pause:
@@ -130,7 +133,7 @@ class Mob(pygame.sprite.Sprite):
         self.can_hit = True
         self.freeze = False
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.spawn[0], self.spawn[1]
+        self.rect.x, self.rect.y = self.spawn[0], -15
         self.health = default_HEALTH_MOB
 
     def run(self):
@@ -158,10 +161,10 @@ class Mob(pygame.sprite.Sprite):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x += 1
                         self.image = pygame.image.load(f'images/mob_right1.png')
-                    if self.hero_pos[1] < self.rect.y - 1:
-                        self.rect.y -= 1
-                    if self.hero_pos[1] > self.rect.y - 1:
-                        self.rect.y += 1
+                    # if self.hero_pos[1] < self.rect.y - 1:
+                    #     self.rect.y -= 1
+                    # if self.hero_pos[1] > self.rect.y - 1:
+                    #     self.rect.y += 1
                 else:
                     if self.hero_pos[0] < self.rect.x - 1:
                         self.rect.x += 1
@@ -169,10 +172,10 @@ class Mob(pygame.sprite.Sprite):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 1
                         self.image = pygame.image.load(f'images/mob_left1.png')
-                    if self.hero_pos[1] < self.rect.y - 1:
-                        self.rect.y += 1
-                    if self.hero_pos[1] > self.rect.y - 1:
-                        self.rect.y -= 1
+                    # if self.hero_pos[1] < self.rect.y - 1:
+                    #     self.rect.y += 1
+                    # if self.hero_pos[1] > self.rect.y - 1:
+                    #     self.rect.y -= 1
 
                 if self.crash > 0 and self.can_hit:
                     self.can_hit = False
