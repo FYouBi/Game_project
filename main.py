@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 import interactive_obj
@@ -57,6 +59,10 @@ hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
 the_world = pygame.mixer.Sound('sounds/the_world.wav')
 time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
+status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png')
+battery = pygame.image.load(f'images/battery-export.png')
+death_font = pygame.image.load(f'images/death_font.png')
+death_font = pygame.transform.scale(death_font, (WIDTH//2, HEIGHT//2))
 heal = False
 count_coins = 0
 pause = False
@@ -67,12 +73,13 @@ bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
 resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
+screen_rect = (0, 0, WIDTH, HEIGHT)
 
 
 def render_all_font_HUD():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
 
-    screen.blit(bg, (0, 0))
+    # screen.blit(bg, (0, 0))
     interactive_obj.dirt.draw(screen)
     interactive_obj.ground.draw(screen)
     coin_sprite.draw(screen)
@@ -88,89 +95,65 @@ def render_all_font_HUD():
     screen.blit(text_background, (WIDTH - 185, HEIGHT - 63))
 
     # Отрисовка востановления здоровья
-    pygame.draw.rect(screen, DARK_GREEN, (11, 68, 100, 10))
-    pygame.draw.rect(screen, GREEN, (6, 65, player.heal, 10))
+    pygame.draw.rect(screen, DARK_GREEN, (6, 55, 55, 10))
+    pygame.draw.rect(screen, GREEN, (6, 50, player.heal, 10))
 
     # Отрисовка стамины
-    pygame.draw.rect(screen, DARK_BLUE, (11, 50, 160, 10))
-    pygame.draw.rect(screen, LIGHT_BLUE, (6, 45, player.stamina, 10))
-
-    # Частичная отрисовка батареии
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 130, 30), 10)
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 128, 23))
+    pygame.draw.rect(screen, DARK_BLUE, (6, 35, 60, 10))
+    pygame.draw.rect(screen, LIGHT_BLUE, (6, 35, player.stamina, 10))
 
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
     if not player.pause:
         if player.update_render_player:
             if not bar:
-                if width_batery_color <= 130:
-                    width_batery_color += PIXEL_SEC / FPS + 0.224
+                if width_batery_color <= 75:
+                    width_batery_color += PIXEL_SEC / FPS + 0.18
             if bar:
                 if width_batery_color >= 0:
                     if player.update_render_player:
-                        width_batery_color -= PIXEL_SEC / FPS + 0.1
+                        width_batery_color -= PIXEL_SEC / FPS + 0.05
                 else:
                     bar = False
 
     # Отрисовка батареи
-    pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 170, 5, width_batery_color, 30))
-    pygame.draw.rect(screen, SILVER, (WIDTH - 41, 10, 10, 20))
-    pygame.draw.rect(screen, BLACK, (WIDTH - 170, 5, 130, 30), 4)
-    pygame.draw.rect(screen, BLACK, (WIDTH - 41,  10, 10, 20), 4)
+    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 90, 15, 70, 35), 10)
+    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 90, 15, 70, 35))
+    pygame.draw.rect(screen, LIGHT_BLUE,
+                     (WIDTH - 90, 15, width_batery_color - 15 if width_batery_color > 15 else - 0, 35), 10)
+    pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 90, 15, width_batery_color, 35))
 
     # Отрисовка тени хп
-    pygame.draw.rect(screen, CRIMSON, (10, 10, 160, 30))
+    pygame.draw.rect(screen, CRIMSON, (10, 10, 90, 20))
 
     # Отрисовка здоровья
-    for i in range(player.health):
-        kf = 5 + 20 * (i // 13)
-        yellow_kf = 24 + 20 * (i // 13)
-        if player.health <= default_HEALTH_PLAYER - 12:
-            pygame.draw.rect(screen, YELLOW, (yellow_kf, 5, 20, 30))
-        pygame.draw.rect(screen, (235, 55, 52), (kf, 5, 20, 30))
-
-    if player.health > int(default_HEALTH_PLAYER * 0.6):
-        health_color = STATUS_BAR_HEALTH_FULL_COLOR
-        health_color_background = 90, 162, 5
-    elif 20 < player.health < int(default_HEALTH_PLAYER * 0.6):
-        health_color = 200, 200, 0
-        health_color_background = 150, 150, 0
-    else:
-        health_color = CRIMSON
-        health_color_background = 90, 0, 5
-
-    font_background = pygame.font.Font('fonts/pixel_font.otf', 40)
-    text_background = font_background.render(f'{player.health}', True, health_color_background)
-    screen.blit(text_background, (175, -1))
-
-    font = pygame.font.Font('fonts/pixel_font.otf', 40)
-    text = font.render(f'{player.health}', True, health_color)
-    screen.blit(text, (173, -3))
+    pygame.draw.rect(screen, (235, 55, 52), (5, 10, player.health, 20))
+    pygame.draw.rect(screen, YELLOW, (player.health if player.health > 5 else + 5, 10, 5, 20))
 
     FPS_LOOK = str(int(clock.get_fps()))
     render = font_FPS.render(FPS_LOOK, False, (0, 255, 0))
     screen.blit(render, (15, HEIGHT - 40))
 
     if not player.update_render_player:
-        if int(font_size_Died) <= WIDTH//6:
-            font_size_Died += PIXEL_SEC / FPS + 0.8
-            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
-            render_die = font_died.render('Ты умер', False, BLACK)
-            screen.blit(render_die, (230, HEIGHT // 3))
-
-            font_size_Died += PIXEL_SEC / FPS + 0.6
-            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
-            render_die = font_died.render('Ты умер', False, CRIMSON)
-            screen.blit(render_die, (250, HEIGHT // 3))
-        else:
-            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
-            render_die = font_died.render('Ты умер', False, BLACK)
-            screen.blit(render_die, (230, HEIGHT // 3))
-
-            font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
-            render_die = font_died.render('Ты умер', False, CRIMSON)
-            screen.blit(render_die, (250, HEIGHT // 3))
+        screen.blit(death_font, (WIDTH//4, HEIGHT//4))
+        # if int(font_size_Died) <= WIDTH//6:
+        #     font_size_Died += PIXEL_SEC / FPS + 0.8
+        #     font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
+        #     render_die = font_died.render('Ты умер', False, BLACK)
+        #     screen.blit(render_die, (230, HEIGHT // 3))
+        #
+        #     font_size_Died += PIXEL_SEC / FPS + 0.6
+        #     font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
+        #     render_die = font_died.render('Ты умер', False, CRIMSON)
+        #     screen.blit(render_die, (250, HEIGHT // 3))
+        # else:
+        #     font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
+        #     render_die = font_died.render('Ты умер', False, BLACK)
+        #     screen.blit(render_die, (230, HEIGHT // 3))
+        #
+        #     font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died))
+        #     render_die = font_died.render('Ты умер', False, CRIMSON)
+        #     screen.blit(render_die, (250, HEIGHT // 3))
     if player.pause:
         # screen.blit(pygame.image.load(f'images/ground.png'), (0, 0))
 
@@ -189,6 +172,8 @@ def render_all_font_HUD():
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[1])
         screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2))
+    screen.blit(status_image, (5, 5))
+    screen.blit(battery, (WIDTH - 100, 10))
 
 
 while running:
@@ -329,10 +314,9 @@ while running:
             play_sounder = 1
             die_hero_sound.set_volume(0.4)
             die_hero_sound.play(loops=0, maxtime=0, fade_ms=120)
-
     screen.fill(BACKGROUND)
     render_all_font_HUD()
-    if pygame.mouse.get_focused():
+    if pygame.mouse.get_focused() and player.update_render_player:
         trigger.draw(screen)
     camera.update(player)
     for sprite in hero_sprite:
