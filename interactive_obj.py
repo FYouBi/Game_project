@@ -4,7 +4,6 @@ from pygame.sprite import AbstractGroup
 
 kill = True
 
-
 def spawn_coin(pos):
     Coin(pos, coin_sprite)
 
@@ -31,7 +30,7 @@ class Ground(pygame.sprite.Sprite):
         self.image = pygame.image.load(f'images/crow-export.png')
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.centerx, self.rect.centery = pos, 100
+        self.rect.centerx, self.rect.centery = pos, 793
 
 
 class Dirt(pygame.sprite.Sprite):
@@ -47,7 +46,7 @@ class Dirt(pygame.sprite.Sprite):
 
 screen_rect = (0, 0, WIDTH, HEIGHT)
 x = -880
-y = 193
+y = 893
 dirt = pygame.sprite.Group()
 ground = pygame.sprite.Group()
 while kill:

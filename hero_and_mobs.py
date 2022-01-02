@@ -16,6 +16,7 @@ class Hero(pygame.sprite.Sprite):
         self.coin_count = 0
         self.way = 'right'
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = -880, 690
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
         self.stamina = ENDURANCE
@@ -128,20 +129,20 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
         self.image = pygame.image.load(f'images/mob_right1.png')
-        self.spawn = (random.randrange(WIDTH // 2, WIDTH - 100), random.randrange(100, HEIGHT - 100))
+        self.spawn = (random.randrange(WIDTH // 2, WIDTH - 100), 690)
         self.step_count = 1
         self.can_hit = True
         self.freeze = False
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.spawn[0], -15
+        self.rect.x, self.rect.y = self.spawn[0], self.spawn[1]
         self.health = default_HEALTH_MOB
+        self.mask_hero = player.mask
 
     def run(self):
         if not player.pause:
             if not self.freeze:
                 self.hero_pos = (player.rect.centerx, player.rect.centery)
                 self.mask_enemy = pygame.mask.from_surface(self.image)
-                self.mask_hero = player.mask
                 self.offset = (player.rect.x - self.rect.x + 5, player.rect.y - self.rect.y + 5)
                 self.crash = self.mask_enemy.overlap_area(self.mask_hero, self.offset)
 
@@ -161,10 +162,6 @@ class Mob(pygame.sprite.Sprite):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x += 1
                         self.image = pygame.image.load(f'images/mob_right1.png')
-                    # if self.hero_pos[1] < self.rect.y - 1:
-                    #     self.rect.y -= 1
-                    # if self.hero_pos[1] > self.rect.y - 1:
-                    #     self.rect.y += 1
                 else:
                     if self.hero_pos[0] < self.rect.x - 1:
                         self.rect.x += 1
@@ -172,10 +169,6 @@ class Mob(pygame.sprite.Sprite):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 1
                         self.image = pygame.image.load(f'images/mob_left1.png')
-                    # if self.hero_pos[1] < self.rect.y - 1:
-                    #     self.rect.y += 1
-                    # if self.hero_pos[1] > self.rect.y - 1:
-                    #     self.rect.y -= 1
 
                 if self.crash > 0 and self.can_hit:
                     self.can_hit = False
