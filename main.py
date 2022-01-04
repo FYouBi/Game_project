@@ -31,8 +31,8 @@ ABILITY_TIME = pygame.USEREVENT + 5
 pygame.time.set_timer(ABILITY_TIME, 0)
 
 # Время с которой востанавливается стамина
-endurance = pygame.USEREVENT + 7
-pygame.time.set_timer(endurance, 1000)
+TIC = pygame.USEREVENT + 7
+pygame.time.set_timer(TIC, 1000)
 
 # Ивент для анимации монетки
 COIN_FLIP = pygame.USEREVENT + 8
@@ -219,6 +219,8 @@ while running:
                 select_button_options -= 1
                 if select_button_options < 0:
                     select_button_options = 1
+            if event.key == pygame.K_ESCAPE:
+                player.paus()
 
             # Выбор опции
             if event.key == pygame.K_e and player.pause:
@@ -228,10 +230,6 @@ while running:
                     player.pause = False
             # Окрашивание выбраной опции
             resume_color, exit_color = exit_color, resume_color
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                player.paus()
 
         # Перемещение курсора
         if event.type == pygame.MOUSEMOTION and not cursor.have_target:
@@ -297,6 +295,8 @@ while running:
             if event.key == pygame.K_f and not sprint:
                 block = True
                 player.velocity -= 0.5
+            if event.key == pygame.K_SPACE:
+                player.jump()
 
         if event.type == pygame.KEYUP and not player.pause:
             # Отмена ускорения
@@ -328,8 +328,9 @@ while running:
         player.move_right()
     if KEY[pygame.K_a]:
         player.move_left()
-    if KEY[pygame.K_SPACE]:
-        player.jump()
+
+    if not player.check_collide_with_floor():
+        player.rect = player.rect.move(0, 5.5)
 
     # Добавление монеток
     count_coins = player.check_collide_with_coin()
@@ -365,8 +366,6 @@ while running:
     for sprite in coin_sprite:
         camera.apply(sprite)
     for sprite in interactive_obj.ground:
-        camera.apply(sprite)
-    for sprite in interactive_obj.dirt:
         camera.apply(sprite)
     clock.tick(FPS)
     pygame.display.flip()

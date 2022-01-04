@@ -16,7 +16,7 @@ class Hero(pygame.sprite.Sprite):
         self.coin_count = 0
         self.way = 'right'
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = -880, 690
+        self.rect.x, self.rect.y = 880, 650
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
         self.stamina = ENDURANCE
@@ -26,7 +26,7 @@ class Hero(pygame.sprite.Sprite):
         self.block = False
 
     def jump(self):
-        print('прыг-прыг')
+        self.rect = self.rect.move(0, -10.5)
 
     def paus(self):
         self.pause = not self.pause
@@ -77,6 +77,12 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
+    def check_collide_with_floor(self):
+        for sprite in interactive_obj.ground.sprites():
+            if pygame.sprite.collide_mask(sprite, self):
+                return True
+        return False
+
     # def move_up(self):
     #     if not self.pause:
     #         if self.update_render_player:
@@ -104,7 +110,7 @@ class Hero(pygame.sprite.Sprite):
                             mob.check_health()
 
     def check_collide_with_coin(self):
-        for sprite in coin_sprite:
+        for sprite in coin_sprite.sprites():
             if pygame.sprite.collide_mask(sprite, self):
                 print(pygame.sprite.collide_mask(sprite, self))
                 self.coin_count += random.randrange(9, 103)

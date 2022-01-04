@@ -4,6 +4,7 @@ from pygame.sprite import AbstractGroup
 
 kill = True
 
+
 def spawn_coin(pos):
     Coin(pos, coin_sprite)
 
@@ -45,15 +46,14 @@ class Dirt(pygame.sprite.Sprite):
 
 
 screen_rect = (0, 0, WIDTH, HEIGHT)
-x = -880
+x = 0
 y = 893
 dirt = pygame.sprite.Group()
 ground = pygame.sprite.Group()
 while kill:
     Ground(x, ground)
-    Dirt((x, y), dirt)
     x += 80
-    if x == 1200:
+    if x == 1920:
         kill = False
         x = 0
     else:
