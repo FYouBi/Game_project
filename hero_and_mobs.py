@@ -16,7 +16,7 @@ class Hero(pygame.sprite.Sprite):
         self.coin_count = 0
         self.way = 'right'
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = 880, 650
+        self.rect.centerx, self.rect.y = 980, 660
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
         self.stamina = ENDURANCE
@@ -26,7 +26,7 @@ class Hero(pygame.sprite.Sprite):
         self.block = False
 
     def jump(self):
-        self.rect = self.rect.move(0, -10.5)
+        player.rect = player.rect.move(0, -15)
 
     def paus(self):
         self.pause = not self.pause
@@ -77,12 +77,6 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
-    def check_collide_with_floor(self):
-        for sprite in interactive_obj.ground.sprites():
-            if pygame.sprite.collide_mask(sprite, self):
-                return True
-        return False
-
     # def move_up(self):
     #     if not self.pause:
     #         if self.update_render_player:
@@ -110,12 +104,18 @@ class Hero(pygame.sprite.Sprite):
                             mob.check_health()
 
     def check_collide_with_coin(self):
-        for sprite in coin_sprite.sprites():
+        for sprite in coin_sprite:
             if pygame.sprite.collide_mask(sprite, self):
                 print(pygame.sprite.collide_mask(sprite, self))
                 self.coin_count += random.randrange(9, 103)
                 coin_sprite.remove(sprite)
         return self.coin_count
+
+    def check_collide_with_ground(self):
+        for sprite in interactive_obj.ground:
+            if pygame.sprite.collide_mask(sprite, self):
+                return True
+        return False
 
     def check_health(self):
         if not self.pause:
@@ -135,7 +135,7 @@ class Mob(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
         self.image = pygame.image.load(f'images/mob_right1.png')
-        self.spawn = (random.randrange(WIDTH // 2, WIDTH - 100), 690)
+        self.spawn = (random.randrange(WIDTH // 2, WIDTH - 100), 10 * 79)
         self.step_count = 1
         self.can_hit = True
         self.freeze = False
