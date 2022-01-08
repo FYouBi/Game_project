@@ -26,36 +26,23 @@ class Coin(pygame.sprite.Sprite):
 
 
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, pos, *groups: AbstractGroup):
+    def __init__(self, pos, screen, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/crow-export.png')
+        self.image = pygame.image.load(f'images/crow-export.png').convert_alpha(screen)
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect.centerx, self.rect.centery = pos, 793
+        self.rect.x, self.rect.y = pos[0], pos[1]
 
 
 class Dirt(pygame.sprite.Sprite):
-    def __init__(self, pos, *groups: AbstractGroup):
+    def __init__(self, pos, screen, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/gryaz-export.png')
+        self.image = pygame.image.load(f'images/gryaz-export.png').convert_alpha(screen)
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.centerx, self.rect.centery = pos
-        if not self.rect.colliderect(screen_rect):
-            self.kill()
 
 
-screen_rect = (0, 0, WIDTH, HEIGHT)
-x = 0
-y = 893
 dirt = pygame.sprite.Group()
 ground = pygame.sprite.Group()
-while kill:
-    Ground(x, ground)
-    x += 80
-    if x == 1920:
-        kill = False
-        x = 0
-    else:
-        kill = True
 coin_sprite = pygame.sprite.Group()
