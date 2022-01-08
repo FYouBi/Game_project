@@ -64,8 +64,9 @@ time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
 count_coins = 0
 select_button_options = 0
-# bg = pygame.image.load(f'images/fon.png')
-# bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
+sec = 0
+bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
+bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
 resume_color = [CRIMSON, RED]
 exit_color = [DARK_GREEN, GREEN]
@@ -75,8 +76,7 @@ def render_all_font_HUD():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
 
     # Отрисовка спрайтов
-    # screen.blit(bg, (0, 0))
-    interactive_obj.dirt.draw(screen)
+    screen.blit(bg, (0, 0))
     interactive_obj.ground.draw(screen)
     coin_sprite.draw(screen)
     hero_sprite.draw(screen)
@@ -200,6 +200,15 @@ def render_all_font_HUD():
         screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2))
 
 
+def set_map():
+    with open('map.txt', 'r') as _map:
+        for y, i in enumerate(_map):
+            for x, j in enumerate(i.split()):
+                if j == 'G':
+                    interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground)
+
+
+set_map()
 while running:
     for event in pygame.event.get():
         KEY = pygame.key.get_pressed()
@@ -295,8 +304,6 @@ while running:
             if event.key == pygame.K_f and not sprint:
                 block = True
                 player.velocity -= 0.5
-            if event.key == pygame.K_SPACE:
-                player.jump()
 
         if event.type == pygame.KEYUP and not player.pause:
             # Отмена ускорения
@@ -328,16 +335,15 @@ while running:
         player.move_right()
     if KEY[pygame.K_a]:
         player.move_left()
-
-    if not player.check_collide_with_floor():
-        player.rect = player.rect.move(0, 5.5)
+    if KEY[pygame.K_SPACE]:
+        player.jump()
 
     # Добавление монеток
     count_coins = player.check_collide_with_coin()
 
-    if motion[0] > WIDTH//2 and motion[1] >= 0:
+    if motion[0] > player.rect.x and motion[1] >= 0:
         player.right_mouse()
-    if motion[0] < WIDTH//2 - 5 and motion[1] >= 0:
+    if motion[0] < player.rect.x and motion[1] >= 0:
         player.left_mouse()
 
     for mob in mobs_sprite.sprites():
@@ -345,6 +351,9 @@ while running:
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
         if distance <= WIDTH//3 + 10:
             mob.run()
+
+    if not player.check_collide_with_ground():
+        player.rect = player.rect.move(0, 5)
 
     if not player.update_render_player:
         if play_sounder == 0:
@@ -368,6 +377,6 @@ while running:
     for sprite in interactive_obj.ground:
         camera.apply(sprite)
     clock.tick(FPS)
-    pygame.display.flip()
+    pygame.display.update()
 
 pygame.quit()
