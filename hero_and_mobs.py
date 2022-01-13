@@ -16,17 +16,24 @@ class Hero(pygame.sprite.Sprite):
         self.coin_count = 0
         self.way = 'right'
         self.rect = self.image.get_rect()
-        self.rect.centerx, self.rect.y = 980, 660
+        self.rect.centerx, self.rect.y = 0, 0
         self.health = default_HEALTH_PLAYER
         self.velocity = SPEED
         self.stamina = ENDURANCE
+        self.can_jump = JUMP_Y
+        self.can_jump_flag = False
         self.heal = default_HEALTH_PLAYER2
         self.update_render_player = True
         self.pause = False
         self.block = False
 
     def jump(self):
-        player.rect = player.rect.move(0, -15)
+        if self.can_jump > 0:
+            self.can_jump -= 1
+            self.rect.y -= 10
+        else:
+            self.can_jump_flag = False
+            self.can_jump = JUMP_Y
 
     def paus(self):
         self.pause = not self.pause

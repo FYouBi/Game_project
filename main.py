@@ -1,40 +1,37 @@
+import random
+
 import pygame
+
 import interactive_obj
 from cam import Camera
 from settings import *
 from hero_and_mobs import player, hero_sprite, mobs_sprite
 from cursor import cursor, trigger
 from interactive_obj import coin_sprite
-from win32api import GetSystemMetrics
 
-print("Width =", GetSystemMetrics(0))
-print("Height =", GetSystemMetrics(1))
 
 pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
 
-# Ивент для анимации ходьбы
 STEP_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(STEP_EVENT, 200)
 
-# Откт удара у мобов
 HIT_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(HIT_EVENT, 3500)
 
-# Откат способности
+UP_HEALTH_EVENT = pygame.USEREVENT + 3
+pygame.time.set_timer(UP_HEALTH_EVENT, 4000)
+
 ABILITY_READY = pygame.USEREVENT + 4
 pygame.time.set_timer(ABILITY_READY, 3000)
 ABILITY = False
 
-# Время длительности способности
 ABILITY_TIME = pygame.USEREVENT + 5
 pygame.time.set_timer(ABILITY_TIME, 0)
 
-# Время с которой востанавливается стамина
-TIC = pygame.USEREVENT + 7
-pygame.time.set_timer(TIC, 1000)
+endurance = pygame.USEREVENT + 7
+pygame.time.set_timer(endurance, 1000)
 
-# Ивент для анимации монетки
 COIN_FLIP = pygame.USEREVENT + 8
 pygame.time.set_timer(COIN_FLIP, 150)
 
@@ -48,31 +45,36 @@ bar = False
 running = True
 sprint = False
 block = False
-heal = False
-pause = False
-confirmation_exit = False
-motion = None
-sorted_keys = None
 font_size_Died = 30
 width_batery_color = 0
 stamina = ENDURANCE
 auto_aim = 0
+dict_of_distance = {}
+sorted_keys = None
 die_hero_sound = pygame.mixer.Sound('sounds/dead.wav')
 hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
 the_world = pygame.mixer.Sound('sounds/the_world.wav')
 time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
+status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png').convert_alpha(screen)
+battery = pygame.image.load(f'images/battery-export.png').convert_alpha(screen)
+death_font = pygame.image.load(f'images/death_font.png').convert_alpha(screen)
+death_font = pygame.transform.scale(death_font, (WIDTH//2, HEIGHT//2))
+heal = False
 count_coins = 0
+pause = False
+confirmation_exit = False
 select_button_options = 0
-sec = 0
 bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
-resume_color = [CRIMSON, RED]
-exit_color = [DARK_GREEN, GREEN]
+render_update = True
+resume_color = [DARK_GREEN, GREEN]
+exit_color = [CRIMSON, RED]
+screen_rect = (0, 0, WIDTH, HEIGHT)
 
 
-def render_all_font_HUD():
+def render():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
 
     # Отрисовка спрайтов
@@ -91,76 +93,48 @@ def render_all_font_HUD():
     screen.blit(text_background, (WIDTH - 185, HEIGHT - 63))
 
     # Отрисовка востановления здоровья
-    pygame.draw.rect(screen, DARK_GREEN, (11, 68, 100, 10))
-    pygame.draw.rect(screen, GREEN, (6, 65, player.heal, 10))
+    pygame.draw.rect(screen, DARK_GREEN, (6, 55, 55, 10))
+    pygame.draw.rect(screen, GREEN, (6, 50, player.heal, 10))
 
     # Отрисовка стамины
-    pygame.draw.rect(screen, DARK_BLUE, (11, 50, 160, 10))
-    pygame.draw.rect(screen, LIGHT_BLUE, (6, 45, player.stamina, 10))
-
-    # Частичная отрисовка батареии
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 130, 30), 10)
-    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 172, 10, 128, 23))
+    pygame.draw.rect(screen, DARK_BLUE, (6, 35, 60, 10))
+    pygame.draw.rect(screen, LIGHT_BLUE, (6, 35, player.stamina, 10))
 
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
-    # Заполнение батареи
     if not player.pause:
         if player.update_render_player:
             if not bar:
-                if width_batery_color <= 130:
-                    width_batery_color += PIXEL_SEC / FPS + 0.084
+                if width_batery_color <= 75:
+                    width_batery_color += PIXEL_SEC / FPS + 0.18
             if bar:
                 if width_batery_color >= 0:
                     if player.update_render_player:
-                        width_batery_color -= PIXEL_SEC / FPS + 0.7
+                        width_batery_color -= PIXEL_SEC / FPS + 0.05
                 else:
                     bar = False
 
     # Отрисовка батареи
-    pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 170, 5, width_batery_color, 30))
-    pygame.draw.rect(screen, SILVER, (WIDTH - 41, 10, 10, 20))
-    pygame.draw.rect(screen, BLACK, (WIDTH - 170, 5, 130, 30), 4)
-    pygame.draw.rect(screen, BLACK, (WIDTH - 41,  10, 10, 20), 4)
+    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 90, 15, 70, 35), 10)
+    pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 90, 15, 70, 35))
+    pygame.draw.rect(screen, LIGHT_BLUE,
+                     (WIDTH - 90, 15, width_batery_color - 15 if width_batery_color > 15 else - 0, 35), 10)
+    pygame.draw.rect(screen, LIGHT_BLUE, (WIDTH - 90, 15, width_batery_color, 35))
 
     # Отрисовка тени хп
-    pygame.draw.rect(screen, CRIMSON, (10, 10, 160, 30))
+    pygame.draw.rect(screen, CRIMSON, (10, 10, 90, 20))
 
     # Отрисовка здоровья
-    for i in range(player.health):
-        kf = 5 + 20 * (i // 13)
-        yellow_kf = 24 + 20 * (i // 13)
-        if player.health <= default_HEALTH_PLAYER - 12:
-            pygame.draw.rect(screen, YELLOW, (yellow_kf, 5, 20, 30))
-        pygame.draw.rect(screen, (235, 55, 52), (kf, 5, 20, 30))
-
-    # Изменение цвета хп от его кол-ва
-    if player.health > int(default_HEALTH_PLAYER * 0.6):
-        health_color = STATUS_BAR_HEALTH_FULL_COLOR
-        health_color_background = 90, 162, 5
-    elif 20 < player.health < int(default_HEALTH_PLAYER * 0.6):
-        health_color = 200, 200, 0
-        health_color_background = 150, 150, 0
-    else:
-        health_color = CRIMSON
-        health_color_background = 90, 0, 5
-
-    # Отрисовка кол-ва хп
-    font_background = pygame.font.Font('fonts/pixel_font.otf', 40)
-    text_background = font_background.render(f'{player.health}', True, health_color_background)
-    screen.blit(text_background, (175, -1))
-    font = pygame.font.Font('fonts/pixel_font.otf', 40)
-    text = font.render(f'{player.health}', True, health_color)
-    screen.blit(text, (173, -3))
+    pygame.draw.rect(screen, (235, 55, 52), (5, 10, player.health, 20))
+    pygame.draw.rect(screen, YELLOW, (player.health if player.health > 5 else + 5, 10, 5, 20))
 
     # Отрисовка ФПС
     FPS_LOOK = str(int(clock.get_fps()))
     render = font_FPS.render(FPS_LOOK, False, (0, 255, 0))
     screen.blit(render, (15, HEIGHT - 40))
 
-    # Экран смерти
     if not player.update_render_player:
-        if int(font_size_Died) <= WIDTH//6:
+        if int(font_size_Died) <= WIDTH // 6:
             font_size_Died += PIXEL_SEC / FPS + 0.8
             font_died = pygame.font.Font('fonts/pixel_font.otf', int(font_size_Died + 10))
             render_die = font_died.render('Ты умер', False, BLACK)
@@ -179,7 +153,6 @@ def render_all_font_HUD():
             render_die = font_died.render('Ты умер', False, CRIMSON)
             screen.blit(render_die, (250, HEIGHT // 3))
 
-    # Пауза
     if player.pause:
         # screen.blit(pygame.image.load(f'images/ground.png'), (0, 0))
 
@@ -198,13 +171,15 @@ def render_all_font_HUD():
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[1])
         screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2))
+    screen.blit(status_image, (5, 5))
+    screen.blit(battery, (WIDTH - 100, 10))
 
 
 def set_map():
     with open('map.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(i.split()):
-                if j == 'G':
+                if j == 'G' and (80 * x) <= WIDTH:
                     interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground)
 
 
@@ -221,10 +196,12 @@ while running:
         if event.type == pygame.KEYDOWN:
             # Перемещение по меню паузы
             if event.key == pygame.K_s and player.pause:
+                resume_color, exit_color = exit_color, resume_color
                 select_button_options += 1
                 if select_button_options > 1:
                     select_button_options = 0
             elif event.key == pygame.K_w and player.pause:
+                resume_color, exit_color = exit_color, resume_color
                 select_button_options -= 1
                 if select_button_options < 0:
                     select_button_options = 1
@@ -238,7 +215,6 @@ while running:
                 if buttons_option[select_button_options] == 'resume':
                     player.pause = False
             # Окрашивание выбраной опции
-            resume_color, exit_color = exit_color, resume_color
 
         # Перемещение курсора
         if event.type == pygame.MOUSEMOTION and not cursor.have_target:
@@ -304,6 +280,10 @@ while running:
             if event.key == pygame.K_f and not sprint:
                 block = True
                 player.velocity -= 0.5
+            # jump
+            if event.key == pygame.K_SPACE and player.check_collide_with_ground():
+                player.can_jump_flag = True
+                player.stamina -= 33
 
         if event.type == pygame.KEYUP and not player.pause:
             # Отмена ускорения
@@ -330,13 +310,13 @@ while running:
     if not block and not sprint:
         if player.stamina < 160:
             player.up_stamina()
+    if player.can_jump_flag:
+        player.jump()
 
     if KEY[pygame.K_d]:
         player.move_right()
     if KEY[pygame.K_a]:
         player.move_left()
-    if KEY[pygame.K_SPACE]:
-        player.jump()
 
     # Добавление монеток
     count_coins = player.check_collide_with_coin()
@@ -353,7 +333,7 @@ while running:
             mob.run()
 
     if not player.check_collide_with_ground():
-        player.rect = player.rect.move(0, 5)
+        player.rect = player.rect.move(0, 4)
 
     if not player.update_render_player:
         if play_sounder == 0:
@@ -362,7 +342,7 @@ while running:
             die_hero_sound.play(loops=0, maxtime=0, fade_ms=120)
 
     screen.fill(BLACK)
-    render_all_font_HUD()
+    render()
     if pygame.mouse.get_focused():
         trigger.draw(screen)
     # Фокустровка камеры на персонаже
