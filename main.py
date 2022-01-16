@@ -1,7 +1,6 @@
 import random
 
 import pygame
-
 import interactive_obj
 from cam import Camera
 from settings import *
@@ -19,9 +18,6 @@ pygame.time.set_timer(STEP_EVENT, 200)
 HIT_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(HIT_EVENT, 3500)
 
-UP_HEALTH_EVENT = pygame.USEREVENT + 3
-pygame.time.set_timer(UP_HEALTH_EVENT, 4000)
-
 ABILITY_READY = pygame.USEREVENT + 4
 pygame.time.set_timer(ABILITY_READY, 3000)
 ABILITY = False
@@ -33,7 +29,7 @@ endurance = pygame.USEREVENT + 7
 pygame.time.set_timer(endurance, 1000)
 
 COIN_FLIP = pygame.USEREVENT + 8
-pygame.time.set_timer(COIN_FLIP, 150)
+pygame.time.set_timer(COIN_FLIP, 120)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -72,7 +68,8 @@ render_update = True
 resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
-
+watcherl = 0
+watcherr = 10
 
 def render():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
@@ -178,7 +175,7 @@ def render():
 def set_map():
     with open('map.txt', 'r') as _map:
         for y, i in enumerate(_map):
-            for x, j in enumerate(i.split()):
+            for x, j in enumerate(''.join(i.split())):
                 if j == 'G' and (80 * x) <= WIDTH:
                     interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground)
 
@@ -298,7 +295,7 @@ while running:
                 player.block = False
                 player.velocity += 0.5
 
-    if sprint:
+    if sprint and player.stamina > 0:
         player.sprint()
     else:
         player.velocity_dawn()
@@ -322,9 +319,9 @@ while running:
     count_coins = player.check_collide_with_coin()
 
     if motion[0] > player.rect.x and motion[1] >= 0:
-        player.right_mouse()
+        player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
-        player.left_mouse()
+        player.left = True
 
     for mob in mobs_sprite.sprites():
         # Проверка дистанции

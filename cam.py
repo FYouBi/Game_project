@@ -1,15 +1,18 @@
-from settings import HEIGHT
+from settings import *
 
 
 class Camera:
     def __init__(self):
+        self.dx = 0
         self.dy = 0
 
     def apply(self, obj):
+        obj.rect.x += self.dx
         obj.rect.y += self.dy
 
     def update(self, target):
-        self.dy = -(target.rect.y + target.rect.h // 1.5 - HEIGHT // 1.5)
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
 camera = Camera()

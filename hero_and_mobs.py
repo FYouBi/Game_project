@@ -7,6 +7,10 @@ from settings import *
 from interactive_obj import coin_sprite
 
 
+def flip(img, x_flip=False, y_flip=False):
+    return pygame.transform.flip(img, x_flip, y_flip)
+
+
 class Hero(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
@@ -26,6 +30,7 @@ class Hero(pygame.sprite.Sprite):
         self.update_render_player = True
         self.pause = False
         self.block = False
+        self.left = False
 
     def jump(self):
         if self.can_jump > 0:
@@ -64,15 +69,15 @@ class Hero(pygame.sprite.Sprite):
         if not self.pause:
             self.stamina += PIXEL_SEC / FPS + 0.5
 
-    def right_mouse(self):
-        if not self.pause:
-            if self.update_render_player:
-                self.way = 'right'
-
-    def left_mouse(self):
-        if not self.pause:
-            if self.update_render_player:
-                self.way = 'left'
+    # def right_mouse(self):
+    #     if not self.pause:
+    #         if self.update_render_player:
+    #             self.way = 'right'
+    #
+    # def left_mouse(self):
+    #     if not self.pause:
+    #         if self.update_render_player:
+    #             self.way = 'left'
 
     def move_right(self):
         if not self.pause:
@@ -97,7 +102,9 @@ class Hero(pygame.sprite.Sprite):
     def do_step(self):
         if not self.pause:
             if self.update_render_player:
-                self.image = pygame.image.load(f'images/hero_default_{self.way}_step_{self.step_count}.png')
+                self.image = pygame.image.load(f'images/hero_default_right_step_{self.step_count}.png')
+                if self.left:
+                    self.image = flip(self.image, x_flip=True)
                 self.step_count += 1 if self.step_count == 1 else -1
 
     def hit(self, mouse_pos):
@@ -206,5 +213,5 @@ hero_sprite = pygame.sprite.Group()
 player = Hero(hero_sprite)
 
 mobs_sprite = pygame.sprite.Group()
-for _ in range(4):
-    Mob(mobs_sprite)
+# for _ in range(4):
+#     Mob(mobs_sprite)
