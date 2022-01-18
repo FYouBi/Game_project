@@ -12,7 +12,7 @@ class Camera:
 
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 1.5)
 
 
 camera = Camera()

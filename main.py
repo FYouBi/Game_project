@@ -1,10 +1,8 @@
 import random
-
-import pygame
 import interactive_obj
 from cam import Camera
 from settings import *
-from hero_and_mobs import player, hero_sprite, mobs_sprite
+from hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
 from cursor import cursor, trigger
 from interactive_obj import coin_sprite
 
@@ -31,7 +29,7 @@ pygame.time.set_timer(endurance, 1000)
 COIN_FLIP = pygame.USEREVENT + 8
 pygame.time.set_timer(COIN_FLIP, 120)
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = screen
 clock = pygame.time.Clock()
 pygame.mouse.set_visible(False)
 
@@ -45,8 +43,6 @@ font_size_Died = 30
 width_batery_color = 0
 stamina = ENDURANCE
 auto_aim = 0
-dict_of_distance = {}
-sorted_keys = None
 die_hero_sound = pygame.mixer.Sound('sounds/dead.wav')
 hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
 the_world = pygame.mixer.Sound('sounds/the_world.wav')
@@ -68,18 +64,19 @@ render_update = True
 resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
-watcherl = 0
-watcherr = 10
+
 
 def render():
     global font_size_Died, PIXEL_SEC, width_batery_color, bar
 
     # Отрисовка спрайтов
     screen.blit(bg, (0, 0))
-    interactive_obj.ground.draw(screen)
+    interactive_obj.ground_first.draw(screen)
+    interactive_obj.ground_second.draw(screen)
     coin_sprite.draw(screen)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
+    balls_sprite.draw(screen)
 
     # Отрисовка кол-ва монет
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
@@ -173,11 +170,12 @@ def render():
 
 
 def set_map():
+    interactive_obj.ground_first.empty()
     with open('map.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(''.join(i.split())):
-                if j == 'G' and (80 * x) <= WIDTH:
-                    interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground)
+                if j == 'G':
+                    interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground_first)
 
 
 set_map()
@@ -310,6 +308,7 @@ while running:
     if player.can_jump_flag:
         player.jump()
 
+    # Перемещение
     if KEY[pygame.K_d]:
         player.move_right()
     if KEY[pygame.K_a]:
@@ -324,10 +323,13 @@ while running:
         player.left = True
 
     for mob in mobs_sprite.sprites():
-        # Проверка дистанции
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
-        if distance <= WIDTH//3 + 10:
-            mob.run()
+        mob.run(distance)
+        if not mob.check_collide_with_ground():
+            mob.rect = mob.rect.move(0, 4)
+
+    for ball in balls_sprite.sprites():
+        ball.move()
 
     if not player.check_collide_with_ground():
         player.rect = player.rect.move(0, 4)
@@ -351,7 +353,9 @@ while running:
         camera.apply(sprite)
     for sprite in coin_sprite:
         camera.apply(sprite)
-    for sprite in interactive_obj.ground:
+    for sprite in balls_sprite:
+        camera.apply(sprite)
+    for sprite in interactive_obj.ground_first:
         camera.apply(sprite)
     clock.tick(FPS)
     pygame.display.update()

@@ -44,5 +44,6 @@ class Dirt(pygame.sprite.Sprite):
 
 
 dirt = pygame.sprite.Group()
-ground = pygame.sprite.Group()
+ground_first = pygame.sprite.Group()
+ground_second = pygame.sprite.Group()
 coin_sprite = pygame.sprite.Group()

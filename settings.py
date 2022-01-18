@@ -1,7 +1,10 @@
+import pygame
 from win32api import GetSystemMetrics
 
 # WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
+
 WIDTH, HEIGHT = 1000, 700
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 FPS = 144
 SPEED = 1.5
 PIXEL_SEC = 10
@@ -24,6 +27,7 @@ SILVER = 192, 192, 192
 YELLOW = 255, 170, 0
 BACKGROUND = 69, 68, 89
 
+STATS_MOB_SLIME = {'green': (14, 7), 'blue': (28, 14), 'red': (14, 28)}
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
 default_DAMAGE_PLAYER = 14
 default_DAMAGE_MOB = 17
