@@ -72,7 +72,7 @@ def render():
     # Отрисовка спрайтов
     screen.blit(bg, (0, 0))
     interactive_obj.ground_first.draw(screen)
-    interactive_obj.ground_second.draw(screen)
+    interactive_obj.aid_kit.draw(screen)
     coin_sprite.draw(screen)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
@@ -176,6 +176,8 @@ def set_map():
             for x, j in enumerate(''.join(i.split())):
                 if j == 'G':
                     interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground_first)
+                if j == 'A':
+                    interactive_obj.AidKit((80 * x, 79 * y), interactive_obj.aid_kit)
 
 
 set_map()
@@ -326,10 +328,16 @@ while running:
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
         mob.run(distance)
         if not mob.check_collide_with_ground():
-            mob.rect = mob.rect.move(0, 4)
+            mob.rect = mob.rect.move(0, 15)
+        if mob.check_pos_y():
+            mobs_sprite.remove(mob)
 
     for ball in balls_sprite.sprites():
         ball.move()
+        if ball.rect.x < 0:
+            balls_sprite.remove(ball)
+
+    player.check_collide_with_aid_kit()
 
     if not player.check_collide_with_ground():
         player.rect = player.rect.move(0, 4)
@@ -348,6 +356,8 @@ while running:
     camera.update(player)
     # Перемещение объектов относительно персонажа
     for sprite in hero_sprite:
+        camera.apply(sprite)
+    for sprite in interactive_obj.aid_kit:
         camera.apply(sprite)
     for sprite in mobs_sprite:
         camera.apply(sprite)

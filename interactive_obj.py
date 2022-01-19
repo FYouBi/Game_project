@@ -43,7 +43,17 @@ class Dirt(pygame.sprite.Sprite):
         self.rect.centerx, self.rect.centery = pos
 
 
+class AidKit(pygame.sprite.Sprite):
+    def __init__(self, pos, *groups: AbstractGroup):
+        super().__init__(*groups)
+        self.image = pygame.image.load(f'images/aid_kit.png').convert_alpha(screen)
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x, self.rect.y = pos
+
+
 dirt = pygame.sprite.Group()
 ground_first = pygame.sprite.Group()
-ground_second = pygame.sprite.Group()
 coin_sprite = pygame.sprite.Group()
+ground_second = pygame.sprite.Group()
+aid_kit = pygame.sprite.Group()
