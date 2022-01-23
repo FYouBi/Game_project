@@ -8,6 +8,14 @@ def flip(img, x_flip=False, y_flip=False):
     return pygame.transform.flip(img, x_flip, y_flip)
 
 
+def cut_sheet(object, sheet, columns, rows):
+    object.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+    for j in range(rows):
+        for i in range(columns):
+            frame_location = (object.rect.w * i, object.rect.h * j)
+            object.frames.append(sheet.subsurface(pygame.Rect(frame_location, object.rect.size)).convert_alpha(screen))
+
+
 class Hero(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
@@ -32,7 +40,7 @@ class Hero(pygame.sprite.Sprite):
     def jump(self):
         if self.can_jump > 0:
             self.can_jump -= 1
-            self.rect.y -= 10
+            self.rect.y -= 35
         else:
             self.can_jump_flag = False
             self.can_jump = JUMP_Y
@@ -131,6 +139,8 @@ class Hero(pygame.sprite.Sprite):
 class Mob(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
+        self.frames = []
+        self.cur_frame = 0
         self.image = None
         self.step_count = 1
         self.can_hit = True
@@ -204,9 +214,10 @@ class Mob(pygame.sprite.Sprite):
 class Slime(Mob):
     def __init__(self, pos, color, groups: AbstractGroup):
         super().__init__()
-        self.image = pygame.image.load(f'images/attack_slime_{color}.gif')
+        cut_sheet(self, pygame.image.load(f'images/walk_slime_{color}_sheet.png'), 4, 2)
         self.health = STATS_MOB_SLIME[color][1]
         self.color = color
+        self.image = self.frames[self.cur_frame]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = pos
         self.direction = None
@@ -236,25 +247,29 @@ class Slime(Mob):
                 if 350 < distance < 500:
                     if self.can_hit:
                         if self.hero_pos[0] < self.rect.x - 1:
-                            self.rect.x -= 1
+                            self.rect.x -= 5
 
                         if self.hero_pos[0] > self.rect.x - 1:
-                            self.rect.x += 1
+                            self.rect.x += 5
 
                 if distance < 350:
                     if self.hero_pos[0] < self.rect.x - 1:
-                        self.rect.x += 1
+                        self.rect.x += 5
 
                     if self.hero_pos[0] > self.rect.x - 1:
-                        self.rect.x -= 1
+                        self.rect.x -= 5
 
-                if distance < 500 and self.can_hit:
+                if distance < 800 and self.can_hit:
                     self.attack()
                     self.can_hit = False
 
     def attack(self):
-        self.image = pygame.image.load(f'images/attack_slime_{self.color}.gif')
+        # cut_sheet(self, pygame.image.load(f'images/attack_slime_{self.color}_sheet.png'), 4, 2)
         SlimeBall(self.color, (self.rect.centerx, self.rect.centery - 15), self.direction)
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
 
 
 class SlimeBall(pygame.sprite.Sprite):
@@ -270,9 +285,9 @@ class SlimeBall(pygame.sprite.Sprite):
     def move(self):
         if not player.pause:
             if self.direction == 'left':
-                self.rect = self.rect.move(-8, 0)
+                self.rect = self.rect.move(-26, 0)
             elif self.direction == 'right':
-                self.rect = self.rect.move(8, 0)
+                self.rect = self.rect.move(26, 0)
             if pygame.sprite.collide_mask(player, self):
                 player.check_health(self.damage)
                 balls_sprite.remove(self)

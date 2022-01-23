@@ -28,7 +28,7 @@ class Coin(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, pos, screen, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/crow-export.png').convert_alpha(screen)
+        self.image = pygame.image.load(f'images/ground.png').convert_alpha(screen)
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x, self.rect.y = pos[0], pos[1]

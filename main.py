@@ -1,4 +1,6 @@
 import random
+
+import hero_and_mobs
 import interactive_obj
 from cam import Camera
 from settings import *
@@ -148,8 +150,6 @@ def render():
             screen.blit(render_die, (250, HEIGHT // 3))
 
     if player.pause:
-        # screen.blit(pygame.image.load(f'images/ground.png'), (0, 0))
-
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[0])
         screen.blit(text, (WIDTH // 2 - 210, HEIGHT // 2 - 95))
@@ -173,11 +173,13 @@ def set_map():
     interactive_obj.ground_first.empty()
     with open('map.txt', 'r') as _map:
         for y, i in enumerate(_map):
-            for x, j in enumerate(''.join(i.split())):
+            for x, j in enumerate(i.split()):
                 if j == 'G':
                     interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground_first)
-                if j == 'A':
+                elif j == 'A':
                     interactive_obj.AidKit((80 * x, 79 * y), interactive_obj.aid_kit)
+                elif j == 'SG':
+                    hero_and_mobs.Slime((80 * x, 79 * y), 'green', mobs_sprite)
 
 
 set_map()
@@ -241,6 +243,8 @@ while running:
         # Анимация вращения монетки
         if event.type == COIN_FLIP and not player.pause:
             for sprite in coin_sprite:
+                sprite.update()
+            for sprite in mobs_sprite:
                 sprite.update()
 
         # Готовность способности
@@ -328,19 +332,19 @@ while running:
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
         mob.run(distance)
         if not mob.check_collide_with_ground():
-            mob.rect = mob.rect.move(0, 15)
-        if mob.check_pos_y():
-            mobs_sprite.remove(mob)
+            mob.rect = mob.rect.move(0, 20)
+            if mob.check_pos_y():
+                mobs_sprite.remove(mob)
 
     for ball in balls_sprite.sprites():
         ball.move()
-        if ball.rect.x < 0:
+        if ball.rect.x < 0 or ball.rect.x > 1000:
             balls_sprite.remove(ball)
 
     player.check_collide_with_aid_kit()
 
     if not player.check_collide_with_ground():
-        player.rect = player.rect.move(0, 4)
+        player.rect = player.rect.move(0, 18)
 
     if not player.update_render_player:
         if play_sounder == 0:

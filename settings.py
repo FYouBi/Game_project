@@ -5,8 +5,8 @@ from win32api import GetSystemMetrics
 
 WIDTH, HEIGHT = 1000, 700
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-FPS = 144
-SPEED = 1.5
+FPS = 35
+SPEED = 5.5
 PIXEL_SEC = 10
 
 KEY = None
@@ -27,7 +27,7 @@ SILVER = 192, 192, 192
 YELLOW = 255, 170, 0
 BACKGROUND = 69, 68, 89
 
-STATS_MOB_SLIME = {'green': (14, 7), 'blue': (28, 14), 'red': (14, 28)}
+STATS_MOB_SLIME = {'green': (14, 14), 'blue': (28, 28), 'red': (14, 42)}
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
 default_DAMAGE_PLAYER = 14
 default_DAMAGE_MOB = 17
@@ -35,4 +35,4 @@ default_HEALTH_MOB = 56
 default_HEALTH_PLAYER = 100
 ENDURANCE = 160
 default_HEALTH_PLAYER2 = 100
-JUMP_Y = 50
+JUMP_Y = 20
