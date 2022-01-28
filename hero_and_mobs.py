@@ -31,15 +31,17 @@ class Hero(pygame.sprite.Sprite):
         self.stamina = ENDURANCE
         self.can_jump = JUMP_Y
         self.can_jump_flag = False
-        self.heal = default_HEALTH_PLAYER2
+        self.heal = default_HEALTH_PLAYER
         self.update_render_player = True
         self.pause = False
         self.block = False
         self.left = False
 
     def jump(self):
-        if self.can_jump > 0:
+        if self.can_jump > 0 and self.stamina > 40:
             self.can_jump -= 1
+            player.stamina -= 2
+
             self.rect.y -= 35
         else:
             self.can_jump_flag = False

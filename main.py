@@ -39,6 +39,7 @@ camera = Camera()
 
 bar = False
 running = True
+select_lvl = True
 sprint = False
 block = False
 font_size_Died = 30
@@ -52,8 +53,6 @@ time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
 play_sounder = 0
 status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png').convert_alpha(screen)
 battery = pygame.image.load(f'images/battery-export.png').convert_alpha(screen)
-death_font = pygame.image.load(f'images/death_font.png').convert_alpha(screen)
-death_font = pygame.transform.scale(death_font, (WIDTH//2, HEIGHT//2))
 heal = False
 count_coins = 0
 pause = False
@@ -62,10 +61,12 @@ select_button_options = 0
 bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
+levels = [[1, (72, 153, 95), 1], [2, (140, 13, 42), 10], [3, (140, 13, 42), 18]]
 render_update = True
 resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
+current_lvl = 0
 
 
 def render():
@@ -152,26 +153,42 @@ def render():
     if player.pause:
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[0])
-        screen.blit(text, (WIDTH // 2 - 210, HEIGHT // 2 - 95))
+        screen.blit(text, (WIDTH // 2 - 310, HEIGHT // 2 - 95))
 
-        font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[1])
-        screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2 - 100))
+        screen.blit(text, (WIDTH // 2 - 300, HEIGHT // 2 - 100))
 
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[0])
-        screen.blit(text, (WIDTH // 2 - 210, HEIGHT // 2 + 5))
+        screen.blit(text, (WIDTH // 2 - 310, HEIGHT // 2 + 5))
 
-        font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[1])
-        screen.blit(text, (WIDTH // 2 - 200, HEIGHT // 2))
+        screen.blit(text, (WIDTH // 2 - 300, HEIGHT // 2))
     screen.blit(status_image, (5, 5))
     screen.blit(battery, (WIDTH - 100, 10))
 
 
-def set_map():
+def select_levels(current):
+    font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
+    text = font_pause.render(f'\nLEVELS\n', True, (11, 122, 96))
+    screen.blit(text, (WIDTH // 4, HEIGHT // 7))
+
+    font_pause = pygame.font.Font('fonts/pixel_font.otf', 124)
+    text = font_pause.render(f'\n', True, current[1])
+    screen.blit(text, (WIDTH // 4 + 23 * current[2], HEIGHT // 2.5))
+
+    font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
+    text = font_pause.render(f'1    2   3', True, (75, 2, 92))
+    screen.blit(text, (WIDTH // 4 + 45, HEIGHT // 2.5 + 10))
+
+    font_pause = pygame.font.Font('fonts/pixel_font.otf', 76)
+    text = font_pause.render(f'ВЫБРАТЬ', True, current[1])
+    screen.blit(text, (WIDTH // 3, HEIGHT // 1.5))
+
+
+def set_map(lvl):
     interactive_obj.ground_first.empty()
-    with open('map.txt', 'r') as _map:
+    with open(f'map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(i.split()):
                 if j == 'G':
@@ -182,7 +199,23 @@ def set_map():
                     hero_and_mobs.Slime((80 * x, 79 * y), 'green', mobs_sprite)
 
 
-set_map()
+while select_lvl:
+    for event in pygame.event.get():
+        KEY = pygame.key.get_pressed()
+        if event.type == pygame.QUIT:
+            exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_d:
+                current_lvl += 1 if current_lvl < 2 else -2
+            if event.key == pygame.K_a:
+                current_lvl += -1 if current_lvl > 0 else 2
+            if event.key == pygame.K_e and levels[current_lvl][1] == (72, 153, 95):
+                set_map(levels[current_lvl][0])
+                select_lvl = False
+    screen.fill(BLACK)
+    select_levels(levels[current_lvl])
+    pygame.display.update()
+
 while running:
     for event in pygame.event.get():
         KEY = pygame.key.get_pressed()
@@ -213,7 +246,6 @@ while running:
                     running = False
                 if buttons_option[select_button_options] == 'resume':
                     player.pause = False
-            # Окрашивание выбраной опции
 
         # Перемещение курсора
         if event.type == pygame.MOUSEMOTION and not cursor.have_target:
@@ -284,7 +316,6 @@ while running:
             # jump
             if event.key == pygame.K_SPACE and player.check_collide_with_ground():
                 player.can_jump_flag = True
-                player.stamina -= 33
 
         if event.type == pygame.KEYUP and not player.pause:
             # Отмена ускорения

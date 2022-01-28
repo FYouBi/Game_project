@@ -4,9 +4,9 @@ from win32api import GetSystemMetrics
 # WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 
 WIDTH, HEIGHT = 1000, 700
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-FPS = 35
-SPEED = 5.5
+screen = pygame.display.set_mode((WIDTH, HEIGHT), 32, 32)
+FPS = 45
+SPEED = 6.5
 PIXEL_SEC = 10
 
 KEY = None
@@ -34,5 +34,4 @@ default_DAMAGE_MOB = 17
 default_HEALTH_MOB = 56
 default_HEALTH_PLAYER = 100
 ENDURANCE = 160
-default_HEALTH_PLAYER2 = 100
 JUMP_Y = 20
