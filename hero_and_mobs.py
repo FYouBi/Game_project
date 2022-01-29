@@ -107,7 +107,7 @@ class Hero(pygame.sprite.Sprite):
     def check_collide_with_aid_kit(self):
         for sprite in interactive_obj.aid_kit:
             if pygame.sprite.collide_mask(sprite, self):
-                self.heal += default_HEALTH_PLAYER2 - self.heal
+                self.heal += 100 - self.heal
                 interactive_obj.aid_kit.remove(sprite)
 
     def check_collide_with_coin(self):
@@ -216,7 +216,7 @@ class Mob(pygame.sprite.Sprite):
 class Slime(Mob):
     def __init__(self, pos, color, groups: AbstractGroup):
         super().__init__()
-        cut_sheet(self, pygame.image.load(f'images/walk_slime_{color}_sheet.png'), 4, 2)
+        cut_sheet(self, pygame.image.load(f'images/slime_walk.png'), 6, 1)
         self.health = STATS_MOB_SLIME[color][1]
         self.color = color
         self.image = self.frames[self.cur_frame]
@@ -266,12 +266,12 @@ class Slime(Mob):
                     self.can_hit = False
 
     def attack(self):
-        # cut_sheet(self, pygame.image.load(f'images/attack_slime_{self.color}_sheet.png'), 4, 2)
         SlimeBall(self.color, (self.rect.centerx, self.rect.centery - 15), self.direction)
 
     def update(self):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
+        self.image = pygame.transform.scale(self.image, (60, 60))
 
 
 class SlimeBall(pygame.sprite.Sprite):

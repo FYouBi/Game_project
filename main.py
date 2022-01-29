@@ -67,6 +67,7 @@ resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
 current_lvl = 0
+motion = [9999, 9999]
 
 
 def render():
@@ -363,7 +364,7 @@ while running:
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
         mob.run(distance)
         if not mob.check_collide_with_ground():
-            mob.rect = mob.rect.move(0, 20)
+            mob.rect = mob.rect.move(0, 13)
             if mob.check_pos_y():
                 mobs_sprite.remove(mob)
 
