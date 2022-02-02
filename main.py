@@ -96,7 +96,7 @@ def render():
 
     # Отрисовка стамины
     pygame.draw.rect(screen, DARK_BLUE, (6, 35, 60, 10))
-    pygame.draw.rect(screen, LIGHT_BLUE, (6, 35, player.stamina, 10))
+    pygame.draw.rect(screen, LIGHT_BLUE, (6, 35, player.stamina // 2, 10))
 
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
@@ -189,6 +189,7 @@ def select_levels(current):
 
 def set_map(lvl):
     interactive_obj.ground_first.empty()
+    interactive_obj.aid_kit.empty()
     with open(f'map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(i.split()):
@@ -200,22 +201,28 @@ def set_map(lvl):
                     hero_and_mobs.Slime((80 * x, 79 * y), 'green', mobs_sprite)
 
 
-while select_lvl:
-    for event in pygame.event.get():
-        KEY = pygame.key.get_pressed()
-        if event.type == pygame.QUIT:
-            exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_d:
-                current_lvl += 1 if current_lvl < 2 else -2
-            if event.key == pygame.K_a:
-                current_lvl += -1 if current_lvl > 0 else 2
-            if event.key == pygame.K_e and levels[current_lvl][1] == (72, 153, 95):
-                set_map(levels[current_lvl][0])
-                select_lvl = False
-    screen.fill(BLACK)
-    select_levels(levels[current_lvl])
-    pygame.display.update()
+def select_lvl_func():
+    global select_lvl, current_lvl, KEY
+    while select_lvl:
+        for event in pygame.event.get():
+            KEY = pygame.key.get_pressed()
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_d:
+                    current_lvl += 1 if current_lvl < 2 else -2
+                if event.key == pygame.K_a:
+                    current_lvl += -1 if current_lvl > 0 else 2
+                if event.key == pygame.K_e and levels[current_lvl][1] == (72, 153, 95):
+                    set_map(levels[current_lvl][0])
+                    select_lvl = False
+        screen.fill(BLACK)
+        select_levels(levels[current_lvl])
+        pygame.display.update()
+
+
+select_lvl_func()
+
 
 while running:
     for event in pygame.event.get():
@@ -266,7 +273,7 @@ while running:
 
         # Анимация бега
         if event.type == STEP_EVENT and not player.pause:
-            player.do_step()
+            player.update()
 
         # Откат атаки у мобов
         if event.type == HIT_EVENT and not player.pause:
@@ -275,10 +282,11 @@ while running:
 
         # Анимация вращения монетки
         if event.type == COIN_FLIP and not player.pause:
-            for sprite in coin_sprite:
-                sprite.update()
-            for sprite in mobs_sprite:
-                sprite.update()
+            if not player.time_stop:
+                for sprite in coin_sprite:
+                    sprite.update()
+                for sprite in mobs_sprite:
+                    sprite.update()
 
         # Готовность способности
         if event.type == ABILITY_READY and not player.pause:
@@ -341,7 +349,7 @@ while running:
         player.block = True
         player.stamina -= 0.1
     if not block and not sprint:
-        if player.stamina < 160:
+        if player.stamina < 200:
             player.up_stamina()
     if player.can_jump_flag:
         player.jump()
@@ -375,7 +383,7 @@ while running:
 
     player.check_collide_with_aid_kit()
 
-    if not player.check_collide_with_ground():
+    if not player.check_collide_with_ground() and not player.pause:
         player.rect = player.rect.move(0, 18)
 
     if not player.update_render_player:

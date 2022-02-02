@@ -19,7 +19,11 @@ def cut_sheet(object, sheet, columns, rows):
 class Hero(pygame.sprite.Sprite):
     def __init__(self, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/hero_default_right.png').convert_alpha(screen)
+        self.frames = []
+        self.cur_frame = 0
+        cut_sheet(self, pygame.image.load(f'images/hero_walk.png'), 2, 1)
+        # self.image = pygame.image.load(f'images/hero_default_right.png').convert_alpha(screen)
+        self.image = self.frames[self.cur_frame]
         self.mask = pygame.mask.from_surface(self.image)
         self.step_count = 1
         self.coin_count = 0
@@ -36,6 +40,7 @@ class Hero(pygame.sprite.Sprite):
         self.pause = False
         self.block = False
         self.left = False
+        self.time_stop = False
 
     def jump(self):
         if self.can_jump > 0 and self.stamina > 40:
@@ -86,13 +91,20 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
-    def do_step(self):
-        if not self.pause:
-            if self.update_render_player:
-                self.image = pygame.image.load(f'images/hero_default_right_step_{self.step_count}.png')
-                if self.left:
-                    self.image = flip(self.image, x_flip=True)
-                self.step_count += 1 if self.step_count == 1 else -1
+    # def do_step(self):
+    #     if not self.pause:
+    #         if self.update_render_player:
+    #             self.image = pygame.image.load(f'images/hero_default_right_step_{self.step_count}.png')
+    #             if self.left:
+    #                 self.image = flip(self.image, x_flip=True)
+    #             self.step_count += 1 if self.step_count == 1 else -1
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
+        # self.image = pygame.transform.scale(self.image, (16*3, 60))
+        self.image = self.image.convert_alpha(screen)
+        self.image = pygame.transform.scale(self.image, (16 * 3, 60))
 
     def hit(self, mouse_pos):
         if not self.pause:
@@ -105,23 +117,17 @@ class Hero(pygame.sprite.Sprite):
                             mob.check_health()
 
     def check_collide_with_aid_kit(self):
-        for sprite in interactive_obj.aid_kit:
-            if pygame.sprite.collide_mask(sprite, self):
-                self.heal += 100 - self.heal
-                interactive_obj.aid_kit.remove(sprite)
+        if pygame.sprite.spritecollide(self, interactive_obj.aid_kit, True):
+            self.heal = 100
 
     def check_collide_with_coin(self):
-        for sprite in interactive_obj.coin_sprite:
-            if pygame.sprite.collide_mask(sprite, self):
-                print(pygame.sprite.collide_mask(sprite, self))
-                self.coin_count += random.randrange(9, 103)
-                interactive_obj.coin_sprite.remove(sprite)
+        if pygame.sprite.spritecollide(self, interactive_obj.coin_sprite, True):
+            self.coin_count += random.randrange(9, 103)
         return self.coin_count
 
     def check_collide_with_ground(self):
-        for sprite in interactive_obj.ground_first:
-            if pygame.sprite.collide_mask(sprite, self):
-                return True
+        if pygame.sprite.spritecollide(self, interactive_obj.ground_first, False):
+            return True
         return False
 
     def check_health(self, damage):
@@ -134,6 +140,7 @@ class Hero(pygame.sprite.Sprite):
 
     def the_world(self):
         if not self.pause:
+            player.time_stop = not player.time_stop
             for mob in mobs_sprite.sprites():
                 mob.freeze_func()
 
@@ -272,6 +279,7 @@ class Slime(Mob):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
         self.image = pygame.transform.scale(self.image, (60, 60))
+        self.image = self.image.convert_alpha(screen)
 
 
 class SlimeBall(pygame.sprite.Sprite):
@@ -300,5 +308,3 @@ player = Hero(hero_sprite)
 
 balls_sprite = pygame.sprite.Group()
 mobs_sprite = pygame.sprite.Group()
-for _ in range(1):
-    Slime((500, 100), 'green', mobs_sprite)
