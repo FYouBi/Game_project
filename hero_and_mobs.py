@@ -23,7 +23,7 @@ class Hero(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.frames = []
         self.cur_frame = 0
-        cut_sheet(self, pygame.image.load(f'images/hero_walk.png'), 2, 1)
+        cut_sheet(self, pygame.image.load(f'images/hero_walk_sheet.png'), 2, 1)
         # self.image = pygame.image.load(f'images/hero_default_right.png').convert_alpha(screen)
         self.image = self.frames[self.cur_frame]
         self.mask = pygame.mask.from_surface(self.image)
@@ -84,7 +84,7 @@ class Hero(pygame.sprite.Sprite):
 
     def up_stamina(self):
         if not self.pause:
-            self.stamina += PIXEL_SEC / FPS + 0.5
+            self.stamina += PIXEL_SEC / FPS + 0.8
 
     def move_right(self):
         if not self.pause:
@@ -96,19 +96,13 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
-    # def do_step(self):
-    #     if not self.pause:
-    #         if self.update_render_player:
-    #             self.image = pygame.image.load(f'images/hero_default_right_step_{self.step_count}.png')
-    #             if self.left:
-    #                 self.image = flip(self.image, x_flip=True)
-    #             self.step_count += 1 if self.step_count == 1 else -1
-
     def update(self):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
         self.image = self.image.convert_alpha(screen)
         self.image = pygame.transform.scale(self.image, (16 * 3, 60))
+        if self.left:
+            self.image = flip(self.image, True)
 
     def hit(self, mouse_pos):
         if not self.pause:
@@ -207,6 +201,7 @@ class Slime(Mob):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = pos
         self.direction = None
+        self.right = False
         mobs_sprite.add(self)
 
     def run(self, distance):
@@ -219,9 +214,11 @@ class Slime(Mob):
 
                 if self.hero_pos[0] < self.rect.x:
                     self.direction = 'left'
+                    self.right = False
 
                 if self.hero_pos[0] > self.rect.x:
                     self.direction = 'right'
+                    self.right = True
 
                 if 350 < distance < 500:
                     if self.can_hit:
@@ -257,8 +254,8 @@ class Slime(Mob):
         self.image = self.frames[self.cur_frame]
         self.image = pygame.transform.scale(self.image, (80, 80))
         self.image = self.image.convert_alpha(screen)
-        # if self.right:
-        #     flip(self.image, True)
+        if self.right:
+            self.image = flip(self.image, True)
 
 
 class SlimeBall(pygame.sprite.Sprite):
@@ -268,7 +265,7 @@ class SlimeBall(pygame.sprite.Sprite):
         self.damage = STATS_MOB_SLIME[color][0]
         self.direction = direction
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = pos
+        self.rect.x, self.rect.y = pos[0], pos[1] + 5
         balls_sprite.add(self)
 
     def move(self):

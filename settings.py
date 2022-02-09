@@ -36,4 +36,4 @@ with open('data.txt', 'r') as stats:
 default_HEALTH_PLAYER = 100
 default_HEALTH_MOB = 56
 ENDURANCE = 200
-JUMP_Y = 17
+JUMP_Y = 13

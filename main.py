@@ -69,14 +69,14 @@ exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
 current_lvl = 0
 motion = [9999, 9999]
-mob_count = 7
+mob_count = 4
 damage_count = 0
 accepted_damage = 0
 hero_lvl = HERO_LVL
 
 
 def render():
-    global PIXEL_SEC, width_batery_color, bar
+    global PIXEL_SEC, width_batery_color, bar, count_coins
 
     # Отрисовка спрайтов
     screen.blit(bg, (0, 0))
@@ -175,17 +175,13 @@ def render():
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[0])
         screen.blit(text, (WIDTH // 2 - 310, HEIGHT // 2 - 95))
-
         text = font_pause.render(f'ПРОДОЛЖИТЬ', True, resume_color[1])
         screen.blit(text, (WIDTH // 2 - 300, HEIGHT // 2 - 100))
-
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 86)
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[0])
         screen.blit(text, (WIDTH // 2 - 320, HEIGHT // 2 + 5))
-
         text = font_pause.render(f'ВЫЙТИ ИЗ ИГРЫ', True, exit_color[1])
         screen.blit(text, (WIDTH // 2 - 310, HEIGHT // 2))
-
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 26)
         text = font_pause.render(f'НАЖМИТЕ "SPACE" ЧТОБЫ ВЕРНУТЬСЯ НА ВЫБОР УРОВНЯ', True, SILVER)
         screen.blit(text, (150, HEIGHT // 3.4))
@@ -216,19 +212,20 @@ def select_levels(current):
 def set_map(lvl):
     interactive_obj.ground_first.empty()
     interactive_obj.aid_kit.empty()
+    interactive_obj.coin_sprite.empty()
     mobs_sprite.empty()
     with open(f'map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(i.split()):
                 if j == 'G':
-                    interactive_obj.Ground((80 * x, 79 * y), screen, interactive_obj.ground_first)
+                    interactive_obj.Ground((81 * x, 79 * y), screen, interactive_obj.ground_first)
                 elif j == 'A':
-                    interactive_obj.AidKit((80 * x, 79 * y), interactive_obj.aid_kit)
+                    interactive_obj.AidKit((81 * x, 79 * y), interactive_obj.aid_kit)
                 elif j == 'S':
-                    hero_and_mobs.Slime((80 * x, 79 * y), f'{lvl}', mobs_sprite)
+                    hero_and_mobs.Slime((81 * x, 79 * y), f'{lvl}', mobs_sprite)
 
 
-def reset_player():
+def reset_player(flag):
     global mob_count, damage_count, accepted_damage, count_coins, hero_lvl
     player.stamina = 200
     player.heal = 100
@@ -238,9 +235,10 @@ def reset_player():
     mob_count = 7
     damage_count = 0
     accepted_damage = 0
-    hero_lvl += count_coins // 100
-    player.damage = 14 + 4 * hero_lvl
-    count_coins -= 100 * count_coins // 100
+    if flag:
+        hero_lvl += count_coins // 100
+        player.damage = 14 + 4 * hero_lvl
+        count_coins = player.coin_count = 0
 
 
 def death_screen():
@@ -256,14 +254,14 @@ def death_screen():
                     death = False
                     player.update_render_player = True
                     select_lvl = True
-                    reset_player()
+                    reset_player(False)
                     set_map(levels[current_lvl][0])
                 if event.key == pygame.K_e:
                     running = True
                     death = False
                     player.update_render_player = True
                     select_lvl = True
-                    reset_player()
+                    reset_player(False)
                     select_lvl_func()
                 if event.key == pygame.K_ESCAPE:
                     exit()
@@ -302,11 +300,11 @@ def win():
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    reset_player()
+                    reset_player(True)
                     running = True
                     current_lvl += 1
                     levels[current_lvl][1] = True
-                    set_map(current_lvl + 1)
+                    set_map(levels[current_lvl][0])
                     win_cycle = False
 
         screen.fill(BLACK)
@@ -340,7 +338,7 @@ while running:
             elif event.key == pygame.K_SPACE and player.pause:
                 running = False
                 select_lvl = True
-                reset_player()
+                reset_player(False)
                 select_lvl_func()
             if event.key == pygame.K_ESCAPE:
                 player.paus()
@@ -476,6 +474,7 @@ while running:
             mob.rect = mob.rect.move(0, 13)
             if mob.check_pos_y():
                 mobs_sprite.remove(mob)
+                mob_count -= 1
 
     for ball in balls_sprite.sprites():
         accepted_damage += ball.move()
@@ -485,7 +484,7 @@ while running:
     player.check_collide_with_aid_kit()
 
     if not player.check_collide_with_ground() and not player.pause:
-        player.rect = player.rect.move(0, 20)
+        player.rect = player.rect.move(0, 13)
         for sprite in interactive_obj.ground_first:
             if sprite.rect.y < -450:
                 player.update_render_player = False
@@ -499,7 +498,7 @@ while running:
         running = False
         death = True
         death_screen()
-
+    print(count_coins, player.damage)
     screen.fill(BLACK)
     render()
     if pygame.mouse.get_focused():
