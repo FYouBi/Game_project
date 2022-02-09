@@ -1,3 +1,6 @@
+import pygame
+
+
 def blitRotate(surf, image, pos, originPos, angle):
     image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
     offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center

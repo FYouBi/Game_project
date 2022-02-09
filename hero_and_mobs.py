@@ -286,3 +286,4 @@ player = Hero(hero_sprite)
 
 balls_sprite = pygame.sprite.Group()
 mobs_sprite = pygame.sprite.Group()
+

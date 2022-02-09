@@ -20,3 +20,4 @@ class Cursor(pygame.sprite.Sprite):
 
 trigger = pygame.sprite.Group()
 cursor = Cursor(trigger)
+

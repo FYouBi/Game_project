@@ -16,3 +16,4 @@ class Camera:
 
 
 camera = Camera()
+
