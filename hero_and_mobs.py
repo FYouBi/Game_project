@@ -1,4 +1,6 @@
 import random
+
+import pygame.sprite
 from pygame.sprite import AbstractGroup
 import interactive_obj
 from settings import *
@@ -21,7 +23,7 @@ class Hero(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.frames = []
         self.cur_frame = 0
-        cut_sheet(self, pygame.image.load(f'images/hero_walk.png'), 2, 1)
+        cut_sheet(self, pygame.image.load(f'images/hero_walk_sheet.png'), 2, 1)
         # self.image = pygame.image.load(f'images/hero_default_right.png').convert_alpha(screen)
         self.image = self.frames[self.cur_frame]
         self.mask = pygame.mask.from_surface(self.image)
@@ -31,6 +33,7 @@ class Hero(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = 100, 100
         self.health = default_HEALTH_PLAYER
+        self.damage = default_DAMAGE_PLAYER
         self.velocity = SPEED
         self.stamina = ENDURANCE
         self.can_jump = JUMP_Y
@@ -40,6 +43,7 @@ class Hero(pygame.sprite.Sprite):
         self.pause = False
         self.block = False
         self.left = False
+        self.rotate = False
         self.time_stop = False
 
     def jump(self):
@@ -49,7 +53,7 @@ class Hero(pygame.sprite.Sprite):
                     self.can_jump -= 1
                     player.stamina -= 2
 
-                    self.rect.y -= 35
+                    self.rect.y -= 45
                 else:
                     self.can_jump_flag = False
                     self.can_jump = JUMP_Y
@@ -80,8 +84,8 @@ class Hero(pygame.sprite.Sprite):
             self.velocity = SPEED
 
     def up_stamina(self):
-        if not self.pause:
-            self.stamina += PIXEL_SEC / FPS + 0.5
+        if not self.pause and not self.rotate:
+            self.stamina += PIXEL_SEC / FPS + 0.8
 
     def move_right(self):
         if not self.pause:
@@ -93,30 +97,27 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 self.rect.x -= self.velocity + 1
 
-    # def do_step(self):
-    #     if not self.pause:
-    #         if self.update_render_player:
-    #             self.image = pygame.image.load(f'images/hero_default_right_step_{self.step_count}.png')
-    #             if self.left:
-    #                 self.image = flip(self.image, x_flip=True)
-    #             self.step_count += 1 if self.step_count == 1 else -1
-
     def update(self):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
-        # self.image = pygame.transform.scale(self.image, (16*3, 60))
         self.image = self.image.convert_alpha(screen)
         self.image = pygame.transform.scale(self.image, (16 * 3, 60))
+        if self.left:
+            self.image = flip(self.image, True)
 
     def hit(self, mouse_pos):
         if not self.pause:
             if self.update_render_player:
                 if self.stamina >= 36:
-                    self.stamina -= 36
-                    self.image = pygame.image.load(f'images/hero_default_{self.way}_hit.png')
+                    self.rotate = True
                     for mob in mobs_sprite.sprites():
                         if pygame.sprite.collide_mask(mouse_pos, mob) or pygame.sprite.collide_mask(self, mob):
-                            mob.check_health()
+                            kill = mob.check_health()
+                            if not kill:
+                                mob.back_damage()
+                            else:
+                                return mob.check_health()
+        return 0
 
     def check_collide_with_aid_kit(self):
         if self.heal != default_HEALTH_PLAYER:
@@ -164,44 +165,6 @@ class Mob(pygame.sprite.Sprite):
         self.health = default_HEALTH_MOB
         self.mask_hero = player.mask
 
-    # def run(self):
-    #     if not player.pause:
-    #         if not self.freeze:
-    #             self.hero_pos = (player.rect.centerx, player.rect.centery)
-    #             self.mask_enemy = pygame.mask.from_surface(self.image)
-    #             self.offset = (player.rect.x - self.rect.x + 5, player.rect.y - self.rect.y + 5)
-    #             self.crash = self.mask_enemy.overlap_area(self.mask_hero, self.offset)
-    #
-    #             for mob in mobs_sprite.sprites():
-    #                 if pygame.sprite.collide_mask(self, mob) and self != mob:
-    #                     if self.rect.x > mob.rect.x:
-    #                         self.rect.x += 1
-    #                         mob.rect.x -= 1
-    #                     else:
-    #                         self.rect.x -= 1
-    #                         mob.rect.x += 1
-    #
-    #             if self.can_hit:
-    #                 if self.hero_pos[0] < self.rect.x - 1:
-    #                     self.rect.x -= 1
-    #                     self.image = pygame.image.load(f'images/mob_left1.png')
-    #                 if self.hero_pos[0] > self.rect.x - 1:
-    #                     self.rect.x += 1
-    #                     self.image = pygame.image.load(f'images/mob_right1.png')
-    #             else:
-    #                 if self.hero_pos[0] < self.rect.x - 1:
-    #                     self.rect.x += 1
-    #                     self.image = pygame.image.load(f'images/mob_right1.png')
-    #                 if self.hero_pos[0] > self.rect.x - 1:
-    #                     self.rect.x -= 1
-    #                     self.image = pygame.image.load(f'images/mob_left1.png')
-    #
-    #             if self.crash > 0 and self.can_hit:
-    #                 self.can_hit = False
-    #                 self.image = pygame.image.load(f'images/mob_left3.png')
-    #                 if not player.block:
-    #                     player.check_health()
-
     def check_pos_y(self):
         if self.rect.y > 800:
             return True
@@ -215,29 +178,18 @@ class Mob(pygame.sprite.Sprite):
 
     def check_health(self):
         if not player.pause:
-            self.health -= default_DAMAGE_PLAYER
+            self.health -= player.damage
             self.damage_visual = True
             if self.health <= 0:
                 if random.randrange(0, 2) == 1:
                     interactive_obj.spawn_coin((self.rect.centerx, self.rect.centery))
                 mobs_sprite.remove(self)
+                return 1
+            return 0
 
     def freeze_func(self):
         if not player.pause:
             self.freeze = not self.freeze
-
-    def back_damage(self):
-        if self.damage_visual:
-            if self.limit_x > 0:
-                self.rect.x += 10
-                self.limit_x -= 10
-            if self.limit_y > 0:
-                self.rect.y -= 10
-                self.limit_y -= 50
-            if self.limit_y <= 0 and self.limit_x <= 0:
-                self.damage_visual = False
-                self.limit_y = 100
-                self.limit_x = 200
 
 
 class Slime(Mob):
@@ -260,10 +212,6 @@ class Slime(Mob):
                 self.mask_enemy = pygame.mask.from_surface(self.image)
                 self.offset = (player.rect.x - self.rect.x + 5, player.rect.y - self.rect.y + 5)
                 self.crash = self.mask_enemy.overlap_area(self.mask_hero, self.offset)
-
-                # if self.right:
-                #     self.image = flip(self.image, x_flip=True)
-                #     self.right = False
 
                 if self.hero_pos[0] < self.rect.x:
                     self.direction = 'left'
@@ -288,9 +236,16 @@ class Slime(Mob):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 5
 
-                if distance < 800 and self.can_hit:
+                if distance < 1000 and self.can_hit:
                     self.attack()
                     self.can_hit = False
+
+    def back_damage(self):
+        self.rect.y -= 52
+        if self.direction == 'right':
+            self.rect.x -= 30
+        else:
+            self.rect.x += 30
 
     def attack(self):
         SlimeBall(self.color, (self.rect.centerx, self.rect.centery - 15), self.direction)
@@ -298,29 +253,33 @@ class Slime(Mob):
     def update(self):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
-        self.image = pygame.transform.scale(self.image, (60, 60))
+        self.image = pygame.transform.scale(self.image, (80, 80))
         self.image = self.image.convert_alpha(screen)
+        if self.right:
+            self.image = flip(self.image, True)
 
 
 class SlimeBall(pygame.sprite.Sprite):
     def __init__(self, color, pos, direction, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = pygame.image.load(f'images/{color}_ball.png').convert_alpha(screen)
+        self.image = pygame.image.load(f'images/slime_ball.png').convert_alpha(screen)
         self.damage = STATS_MOB_SLIME[color][0]
         self.direction = direction
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = pos
+        self.rect.x, self.rect.y = pos[0], pos[1] + 5
         balls_sprite.add(self)
 
     def move(self):
         if not player.pause:
             if self.direction == 'left':
-                self.rect = self.rect.move(-26, 0)
+                self.rect = self.rect.move(-20, 0)
             elif self.direction == 'right':
-                self.rect = self.rect.move(26, 0)
+                self.rect = self.rect.move(20, 0)
             if pygame.sprite.collide_mask(player, self):
                 player.check_health(self.damage)
                 balls_sprite.remove(self)
+                return self.damage
+        return 0
 
 
 hero_sprite = pygame.sprite.Group()
@@ -328,3 +287,4 @@ player = Hero(hero_sprite)
 
 balls_sprite = pygame.sprite.Group()
 mobs_sprite = pygame.sprite.Group()
+
