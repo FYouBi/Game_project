@@ -1,9 +1,8 @@
 import pygame
-from win32api import GetSystemMetrics
 
 # WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 
-WIDTH, HEIGHT = 1000, 700
+WIDTH, HEIGHT = 1920, 1080
 screen = pygame.display.set_mode((WIDTH, HEIGHT), 32, 32)
 FPS = 59
 SPEED = 7.5
@@ -29,7 +28,7 @@ BACKGROUND = 69, 68, 89
 
 STATS_MOB_SLIME = {'1': (14, 14*3), '2': (28, 14*5), '3': (14, 14*7)}
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
-with open('data.txt', 'r') as stats:
+with open('data/data.txt', 'r') as stats:
     stats = stats.readlines()
     HERO_LVL = int(stats[1])
     default_DAMAGE_PLAYER = 14 + 4 * HERO_LVL

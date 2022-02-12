@@ -16,7 +16,7 @@ HIT_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(HIT_EVENT, 3500)
 
 ABILITY_READY = pygame.USEREVENT + 4
-pygame.time.set_timer(ABILITY_READY, 3000)
+pygame.time.set_timer(ABILITY_READY, 15000)
 ABILITY = False
 
 ABILITY_TIME = pygame.USEREVENT + 5
@@ -105,17 +105,11 @@ def render():
 
     font_FPS = pygame.font.Font('fonts/pixel_font.otf', 26)
 
-    if not player.pause:
-        if player.update_render_player:
-            if not bar:
-                if width_batery_color <= 75:
-                    width_batery_color += PIXEL_SEC / FPS + 0.18
-            if bar:
-                if width_batery_color >= 0:
-                    if player.update_render_player:
-                        width_batery_color -= PIXEL_SEC / FPS + 0.05
-                else:
-                    bar = False
+    if player.update_render_player:
+        if width_batery_color <= 75 and not ABILITY and not bar:
+            width_batery_color += PIXEL_SEC / FPS
+        elif width_batery_color >= 0 and bar:
+            width_batery_color -= PIXEL_SEC / FPS * 2.6
 
     # Отрисовка батареи
     pygame.draw.rect(screen, DARK_BLUE, (WIDTH - 90, 15, 70, 35), 10)
@@ -143,21 +137,19 @@ def render():
     if death:
         font_died = pygame.font.Font('fonts/pixel_font.otf', 126)
         render_die = font_died.render('Ты умер', False, CRIMSON)
-        screen.blit(render_die, (220, HEIGHT // 3.5))
+        screen.blit(render_die, (WIDTH//3, HEIGHT // 3.5))
         font_died = pygame.font.Font('fonts/pixel_font.otf', 33)
         render_die = font_died.render('НАЖМИТЕ "SPACE" ЧТОБЫ ВОЗРОДИТЬСЯ', False, SILVER)
-        screen.blit(render_die, (155, HEIGHT // 2))
+        screen.blit(render_die, (WIDTH//3, HEIGHT // 2))
         font_died = pygame.font.Font('fonts/pixel_font.otf', 33)
         render_die = font_died.render('НАЖМИТЕ "E" ЧТОБЫ ВЕРНУТЬСЯ НА ВЫБОР УРОВНЯ', False, SILVER)
-        screen.blit(render_die, (60, HEIGHT // 1.7))
+        screen.blit(render_die, (WIDTH//3, HEIGHT // 1.7))
         font_died = pygame.font.Font('fonts/pixel_font.otf', 33)
         render_die = font_died.render('НАЖМИТЕ "ESC" ЧТОБЫ ВЫЙТИ ИЗ ИГРЫ', False, SILVER)
-        screen.blit(render_die, (155, HEIGHT // 1.5))
+        screen.blit(render_die, (WIDTH//3, HEIGHT // 1.5))
 
     if win_cycle:
         font = pygame.font.Font('fonts/pixel_font.otf', 96)
-        score = font.render('ТЫ ВЫЙГРАЛ!', False, CRIMSON)
-        screen.blit(score, (220, HEIGHT // 5.5))
         font = pygame.font.Font('fonts/pixel_font.otf', 33)
         score = font.render('СЧЕТ:', False, YELLOW)
         screen.blit(score, (WIDTH // 2, HEIGHT // 3))
@@ -168,7 +160,7 @@ def render():
         score = font.render(f'ОЧКИ    {count_coins}', False, YELLOW)
         screen.blit(score, (WIDTH // 2 - 10, HEIGHT // 2))
         score = font.render('ЧТОБЫ ПРОДОЛЖИТЬ НАЖМИТЕ "SPACE"', False, YELLOW)
-        screen.blit(score, (155, HEIGHT // 1.5))
+        screen.blit(score, (WIDTH//3, HEIGHT // 1.5))
 
     if player.pause:
         pygame.mixer.music.set_volume(0.1)
@@ -184,29 +176,32 @@ def render():
         screen.blit(text, (WIDTH // 2 - 310, HEIGHT // 2))
         font_pause = pygame.font.Font('fonts/pixel_font.otf', 26)
         text = font_pause.render(f'НАЖМИТЕ "SPACE" ЧТОБЫ ВЕРНУТЬСЯ НА ВЫБОР УРОВНЯ', True, SILVER)
-        screen.blit(text, (150, HEIGHT // 3.4))
+        screen.blit(text, (WIDTH//3, HEIGHT - 100))
     else:
         pygame.mixer.music.set_volume(0.6)
     screen.blit(status_image, (5, 5))
     screen.blit(battery, (WIDTH - 100, 10))
+    font_version = pygame.font.Font('fonts/pixel_font.otf', 26)
+    text = font_version.render(f'0.0.9', True, SILVER)
+    screen.blit(text, (WIDTH // 2, HEIGHT - 30))
 
 
 def select_levels(current):
     font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
     text = font_pause.render(f'\nLEVELS\n', True, (11, 122, 96))
-    screen.blit(text, (WIDTH // 4, HEIGHT // 7))
+    screen.blit(text, (WIDTH // 2.7, HEIGHT // 7))
 
     font_pause = pygame.font.Font('fonts/pixel_font.otf', 124)
     text = font_pause.render(f'\n', True, (72, 153, 95) if current[1] else (140, 13, 42))
-    screen.blit(text, (WIDTH // 4 + 23 * current[2], HEIGHT // 2.5))
+    screen.blit(text, (WIDTH // 2.7 + 23 * current[2], HEIGHT // 2.5))
 
     font_pause = pygame.font.Font('fonts/pixel_font.otf', 100)
     text = font_pause.render(f'1    2   3', True, (75, 2, 92))
-    screen.blit(text, (WIDTH // 4 + 45, HEIGHT // 2.5 + 10))
+    screen.blit(text, (WIDTH // 2.7 + 45, HEIGHT // 2.5 + 10))
 
     font_pause = pygame.font.Font('fonts/pixel_font.otf', 76)
     text = font_pause.render(f'ВЫБРАТЬ', True, (72, 153, 95) if current[1] else (140, 13, 42))
-    screen.blit(text, (WIDTH // 3, HEIGHT // 1.5))
+    screen.blit(text, (WIDTH // 2.4, HEIGHT // 1.5))
 
 
 def set_map(lvl):
@@ -214,7 +209,7 @@ def set_map(lvl):
     interactive_obj.aid_kit.empty()
     interactive_obj.coin_sprite.empty()
     mobs_sprite.empty()
-    with open(f'map{lvl}.txt', 'r') as _map:
+    with open(f'data/map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
             for x, j in enumerate(i.split()):
                 if j == 'G':
@@ -389,8 +384,9 @@ while running:
 
         # Завершение способности
         if event.type == ABILITY_TIME and not player.pause:
+            bar = False
             pygame.time.set_timer(ABILITY_TIME, 0)
-            pygame.time.set_timer(ABILITY_READY, 3000)
+            pygame.time.set_timer(ABILITY_READY, 15000)
             time_resume.set_volume(0.2)
             time_resume.play(loops=0, maxtime=0, fade_ms=120)
             player.the_world()
@@ -404,7 +400,7 @@ while running:
                 player.the_world()
                 the_world.set_volume(0.2)
                 the_world.play(loops=0, maxtime=0, fade_ms=120)
-                pygame.time.set_timer(ABILITY_TIME, 5300)
+                pygame.time.set_timer(ABILITY_TIME, 5000)
                 player.velocity *= 0.3
             # Ускорение
             if event.key == pygame.K_LSHIFT and not block and not player.pause:
@@ -498,7 +494,6 @@ while running:
         running = False
         death = True
         death_screen()
-    print(count_coins, player.damage)
     screen.fill(BLACK)
     render()
     if pygame.mouse.get_focused():
@@ -518,8 +513,7 @@ while running:
         camera.apply(sprite)
     for sprite in interactive_obj.ground_first:
         camera.apply(sprite)
-    clock.tick(35)
+    clock.tick(FPS)
     pygame.display.update()
 
 pygame.quit()
-
