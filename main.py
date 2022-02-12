@@ -1,5 +1,6 @@
 import hero_and_mobs
 import interactive_obj
+import random
 from cam import Camera
 from cursor import cursor, trigger
 import func_rotate
@@ -79,6 +80,47 @@ angle = 0
 damage_count = 0
 accepted_damage = 0
 hero_lvl = HERO_LVL
+GRAVITY = 6
+
+
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = []
+    for scale in (3, 5):
+        fire.append(pygame.transform.scale(pygame.image.load('images/box.png'), (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(coin_sprite)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 1
+    # возможные скорости
+    velocity = range(-9, 1), range(-40, 0)
+    for _ in range(particle_count):
+        Particle(position, random.choice(velocity[0]), random.choice(velocity[1]))
 
 
 def render():
@@ -470,8 +512,12 @@ while running:
 
     # Перемещение
     if KEY[pygame.K_d]:
+        if player.check_collide_with_ground():
+            create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50))
         player.move_right()
     if KEY[pygame.K_a]:
+        if player.check_collide_with_ground():
+            create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50))
         player.move_left()
 
     if mob_count == 0:
@@ -483,8 +529,10 @@ while running:
     count_coins = player.check_collide_with_coin()
 
     if motion[0] > player.rect.x and motion[1] >= 0:
+        angle = 0
         player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
+        angle = 180
         player.left = True
 
     for mob in mobs_sprite.sprites():
