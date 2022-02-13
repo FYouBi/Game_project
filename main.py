@@ -5,7 +5,6 @@ from cam import Camera
 from cursor import cursor, trigger
 import func_rotate
 from hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
-from interactive_obj import coin_sprite
 from settings import *
 
 pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -61,6 +60,7 @@ weapon = pygame.transform.scale(weapon, (136, 6))
 heal = False
 count_coins = 0
 pause = False
+right = True
 confirmation_exit = False
 select_button_options = 0
 bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
@@ -88,7 +88,8 @@ def render():
     screen.blit(bg, (0, 0))
     interactive_obj.ground_first.draw(screen)
     interactive_obj.aid_kit.draw(screen)
-    coin_sprite.draw(screen)
+    interactive_obj.coin_sprite.draw(screen)
+    interactive_obj.particle_sprite.draw(screen)
     func_rotate.blitRotate(screen, weapon, (player.rect.topleft[0] + 20, player.rect.topleft[1] + 30), (0, 0), angle)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
@@ -219,6 +220,7 @@ def set_map(lvl):
     interactive_obj.ground_first.empty()
     interactive_obj.aid_kit.empty()
     interactive_obj.coin_sprite.empty()
+    interactive_obj.particle_sprite.empty()
     mobs_sprite.empty()
     with open(f'data/map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
@@ -374,17 +376,6 @@ while running:
                 mob_count -= c
                 damage_count += default_DAMAGE_PLAYER * c
 
-        # Атака
-        if player.rotate and not player.pause:
-            if final_angle >= 0:
-                angle -= 10 / FPS + speed_attack
-                final_angle -= 10 / FPS + speed_attack
-                player.stamina -= 3
-            else:
-                player.rotate = False
-                angle = 0
-                final_angle = 360
-
         # Анимация бега
         if event.type == STEP_EVENT and not player.pause:
             player.update()
@@ -397,8 +388,9 @@ while running:
         # Анимация вращения монетки
         if event.type == COIN_FLIP and not player.pause:
             if not player.time_stop:
-                for sprite in coin_sprite:
-                    sprite.update()
+                for sprite in interactive_obj.coin_sprite:
+                    if sprite.coin:
+                        sprite.update()
                 for sprite in mobs_sprite:
                     sprite.update()
 
@@ -469,6 +461,25 @@ while running:
     if player.can_jump_flag:
         player.jump()
 
+    # Атака
+    if player.rotate and not player.pause:
+        if final_angle >= 0:
+            angle -= 10 / FPS + speed_attack
+            final_angle -= 10 / FPS + speed_attack
+            player.stamina -= 1.5
+        else:
+            player.rotate = False
+            angle = 0
+            final_angle = 360
+
+    if not player.rotate:
+        if motion[0] > player.rect.x and motion[1] >= 0:
+            angle = -((motion[1] - WIDTH // 3.5) // 12) \
+                if abs(-((motion[1] - WIDTH // 3.5) // 12)) <= 90 else angle
+        if motion[0] < player.rect.x and motion[1] >= 0:
+            angle = ((motion[1] - WIDTH // 3.5) // 12 - 180) \
+                if abs(((motion[1] - WIDTH // 3.5) // 12 - 180)) <= 360 else angle
+
     # Перемещение
     if KEY[pygame.K_d]:
         if player.check_collide_with_ground():
@@ -489,12 +500,19 @@ while running:
 
     if motion[0] > player.rect.x and motion[1] >= 0:
         if not player.rotate:
-            angle = 0
+            if right:
+                angle = 0
+                right = False
             player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
         if not player.rotate:
-            angle = 180
+            if not right:
+                angle = 180
+                right = True
             player.left = True
+
+    for sprite in interactive_obj.particle_sprite.sprites():
+        sprite.update()
 
     for mob in mobs_sprite.sprites():
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
@@ -540,7 +558,7 @@ while running:
         camera.apply(sprite)
     for sprite in mobs_sprite:
         camera.apply(sprite)
-    for sprite in coin_sprite:
+    for sprite in interactive_obj.coin_sprite:
         camera.apply(sprite)
     for sprite in balls_sprite:
         camera.apply(sprite)

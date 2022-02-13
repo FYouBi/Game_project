@@ -32,7 +32,7 @@ BACKGROUND = 69, 68, 89
 STATS_MOB_SLIME = {'1': (14, 14*3), '2': (28, 14*5), '3': (14, 14*7)}
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
 with open('data/data.txt', 'r') as stats:
-    SPEED_ATTACK = 40
+    SPEED_ATTACK = 20
     stats = stats.readlines()
     HERO_LVL = int(stats[1])
     print(HERO_LVL)

@@ -8,7 +8,7 @@ kill = True
 
 
 def spawn_coin(pos):
-    Coin(pos, coin_sprite)
+    Coin(pos)
 
 
 def create_particles(position):
@@ -26,10 +26,12 @@ class Coin(pygame.sprite.Sprite):
         self.fl = False
         self.frame = 1
         self.count = 0
+        self.coin = True
         self.image = pygame.image.load(f'images/coin{self.frame}.png')
         self.coin_mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        self.rect.centerx, self.rect.centery = pos
+        self.rect.centerx, self.rect.centery = pos[0], pos[1] + 20
+        coin_sprite.add(self)
 
     def update(self):
         self.frame += 1 if self.frame < 6 else -5
@@ -65,7 +67,7 @@ class Particle(pygame.sprite.Sprite):
         super().__init__(coin_sprite)
         self.image = random.choice(self.fire)
         self.rect = self.image.get_rect()
-
+        self.coin = False
         # у каждой частицы своя скорость — это вектор
         self.velocity = [dx, dy]
         # и свои координаты

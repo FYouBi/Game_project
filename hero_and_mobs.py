@@ -128,8 +128,11 @@ class Hero(pygame.sprite.Sprite):
                 self.heal = 100
 
     def check_collide_with_coin(self):
-        if pygame.sprite.spritecollide(self, interactive_obj.coin_sprite, True):
-            self.coin_count += random.randrange(9, 103)
+        for sprite in interactive_obj.coin_sprite.sprites():
+            if pygame.sprite.collide_mask(sprite, self) and sprite.coin:
+                self.coin_count += random.randrange(9, 103)
+                sprite.kill()
+
         return self.coin_count
 
     def check_collide_with_ground(self):
