@@ -43,6 +43,7 @@ class Hero(pygame.sprite.Sprite):
         self.pause = False
         self.block = False
         self.left = False
+        self.rotate = False
         self.time_stop = False
 
     def jump(self):
@@ -83,7 +84,7 @@ class Hero(pygame.sprite.Sprite):
             self.velocity = SPEED
 
     def up_stamina(self):
-        if not self.pause:
+        if not self.pause and not self.rotate:
             self.stamina += PIXEL_SEC / FPS + 0.8
 
     def move_right(self):
@@ -108,9 +109,12 @@ class Hero(pygame.sprite.Sprite):
         if not self.pause:
             if self.update_render_player:
                 if self.stamina >= 36:
-                    self.stamina -= 36
+                    self.rotate = True
                     for mob in mobs_sprite.sprites():
-                        if pygame.sprite.collide_mask(mouse_pos, mob) or pygame.sprite.collide_mask(self, mob):
+                        print(self.rect.centerx - mob.rect.centerx)
+                        if -136 <= self.rect.centerx - mob.rect.centerx <= 166 \
+                                and -136 <= self.rect.centery - mob.rect.centery <= 136:
+                            print(True)
                             kill = mob.check_health()
                             if not kill:
                                 mob.back_damage()
@@ -235,7 +239,7 @@ class Slime(Mob):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 5
 
-                if distance < 800 and self.can_hit:
+                if distance < 700 and self.can_hit:
                     self.attack()
                     self.can_hit = False
 
@@ -271,9 +275,9 @@ class SlimeBall(pygame.sprite.Sprite):
     def move(self):
         if not player.pause:
             if self.direction == 'left':
-                self.rect = self.rect.move(-26, 0)
+                self.rect = self.rect.move(-20, 0)
             elif self.direction == 'right':
-                self.rect = self.rect.move(26, 0)
+                self.rect = self.rect.move(20, 0)
             if pygame.sprite.collide_mask(player, self):
                 player.check_health(self.damage)
                 balls_sprite.remove(self)
@@ -286,4 +290,3 @@ player = Hero(hero_sprite)
 
 balls_sprite = pygame.sprite.Group()
 mobs_sprite = pygame.sprite.Group()
-

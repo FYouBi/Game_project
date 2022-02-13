@@ -1,7 +1,9 @@
 import hero_and_mobs
 import interactive_obj
+import random
 from cam import Camera
 from cursor import cursor, trigger
+import func_rotate
 from hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
 from interactive_obj import coin_sprite
 from settings import *
@@ -13,7 +15,7 @@ STEP_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(STEP_EVENT, 200)
 
 HIT_EVENT = pygame.USEREVENT + 2
-pygame.time.set_timer(HIT_EVENT, 3500)
+pygame.time.set_timer(HIT_EVENT, 2500)
 
 ABILITY_READY = pygame.USEREVENT + 4
 pygame.time.set_timer(ABILITY_READY, 15000)
@@ -54,6 +56,8 @@ pygame.mixer.music.play(-1, 0, 100)
 pygame.mixer.music.set_volume(0.3)
 status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png').convert_alpha(screen)
 battery = pygame.image.load(f'images/battery-export.png').convert_alpha(screen)
+weapon = pygame.image.load(f'images/weapon.png').convert_alpha(screen)
+weapon = pygame.transform.scale(weapon, (136, 6))
 heal = False
 count_coins = 0
 pause = False
@@ -68,21 +72,24 @@ resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
 screen_rect = (0, 0, WIDTH, HEIGHT)
 current_lvl = 0
-motion = [9999, 9999]
+speed_attack = SPEED_ATTACK
+motion = [0, 0]
 mob_count = 4
+final_angle = 360
+angle = 0
 damage_count = 0
 accepted_damage = 0
 hero_lvl = HERO_LVL
 
 
 def render():
-    global PIXEL_SEC, width_batery_color, bar, count_coins
-
+    global PIXEL_SEC, width_batery_color, bar, count_coins, angle
     # Отрисовка спрайтов
     screen.blit(bg, (0, 0))
     interactive_obj.ground_first.draw(screen)
     interactive_obj.aid_kit.draw(screen)
     coin_sprite.draw(screen)
+    func_rotate.blitRotate(screen, weapon, (player.rect.topleft[0] + 20, player.rect.topleft[1] + 30), (0, 0), angle)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
     balls_sprite.draw(screen)
@@ -184,6 +191,10 @@ def render():
     font_version = pygame.font.Font('fonts/pixel_font.otf', 26)
     text = font_version.render(f'0.0.9', True, SILVER)
     screen.blit(text, (WIDTH // 2, HEIGHT - 30))
+    lvl = font_version.render(f'{str(hero_lvl)}', True, (255, 255, 255))
+    pygame.draw.line(screen, (255, 255, 255), [20, 64], [20, 87], 2)
+    pygame.draw.line(screen, (255, 255, 255), [15, 64], [15, 87], 2)
+    screen.blit(lvl, (10, 80))
 
 
 def select_levels(current):
@@ -221,10 +232,13 @@ def set_map(lvl):
 
 
 def reset_player(flag):
-    global mob_count, damage_count, accepted_damage, count_coins, hero_lvl
+    global mob_count, damage_count, accepted_damage, count_coins, hero_lvl, angle, final_angle
     player.stamina = 200
     player.heal = 100
     player.health = 100
+    angle = 0
+    final_angle = 360
+    player.rotate = False
     player.pause = False
     player.rect.x, player.rect.y = 100, 100
     mob_count = 7
@@ -351,7 +365,7 @@ while running:
 
         # Реакция на нажатие мыши
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1 and not player.pause:
+            if event.button == 1 and not player.pause and not player.rotate:
                 if player.stamina >= 36:
                     if player.update_render_player:
                         hit_hero_sound.set_volume(0.2)
@@ -359,6 +373,17 @@ while running:
                 c = player.hit(cursor)
                 mob_count -= c
                 damage_count += default_DAMAGE_PLAYER * c
+
+        # Атака
+        if player.rotate and not player.pause:
+            if final_angle >= 0:
+                angle -= 10 / FPS + speed_attack
+                final_angle -= 10 / FPS + speed_attack
+                player.stamina -= 3
+            else:
+                player.rotate = False
+                angle = 0
+                final_angle = 360
 
         # Анимация бега
         if event.type == STEP_EVENT and not player.pause:
@@ -446,8 +471,12 @@ while running:
 
     # Перемещение
     if KEY[pygame.K_d]:
+        if player.check_collide_with_ground():
+            interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50))
         player.move_right()
     if KEY[pygame.K_a]:
+        if player.check_collide_with_ground():
+            interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50))
         player.move_left()
 
     if mob_count == 0:
@@ -459,9 +488,13 @@ while running:
     count_coins = player.check_collide_with_coin()
 
     if motion[0] > player.rect.x and motion[1] >= 0:
-        player.left = False
+        if not player.rotate:
+            angle = 0
+            player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
-        player.left = True
+        if not player.rotate:
+            angle = 180
+            player.left = True
 
     for mob in mobs_sprite.sprites():
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
@@ -474,7 +507,7 @@ while running:
 
     for ball in balls_sprite.sprites():
         accepted_damage += ball.move()
-        if ball.rect.x < 0 or ball.rect.x > 1000:
+        if ball.rect.x < 0 or ball.rect.x > 10000:
             balls_sprite.remove(ball)
 
     player.check_collide_with_aid_kit()
