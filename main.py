@@ -1,11 +1,9 @@
 import hero_and_mobs
 import interactive_obj
-import random
 from cam import Camera
 from cursor import cursor, trigger
 import func_rotate
 from hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
-from interactive_obj import coin_sprite
 from settings import *
 
 pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -61,6 +59,8 @@ weapon = pygame.transform.scale(weapon, (136, 6))
 heal = False
 count_coins = 0
 pause = False
+right = True
+KEY = 0
 confirmation_exit = False
 select_button_options = 0
 bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
@@ -74,53 +74,13 @@ screen_rect = (0, 0, WIDTH, HEIGHT)
 current_lvl = 0
 speed_attack = SPEED_ATTACK
 motion = [0, 0]
-mob_count = 4
+mob_count = 7
 final_angle = 360
 angle = 0
+part_flag = False
 damage_count = 0
 accepted_damage = 0
 hero_lvl = HERO_LVL
-GRAVITY = 6
-
-
-class Particle(pygame.sprite.Sprite):
-    # сгенерируем частицы разного размера
-    fire = []
-    for scale in (3, 5):
-        fire.append(pygame.transform.scale(pygame.image.load('images/box.png'), (scale, scale)))
-
-    def __init__(self, pos, dx, dy):
-        super().__init__(coin_sprite)
-        self.image = random.choice(self.fire)
-        self.rect = self.image.get_rect()
-
-        # у каждой частицы своя скорость — это вектор
-        self.velocity = [dx, dy]
-        # и свои координаты
-        self.rect.x, self.rect.y = pos
-
-        # гравитация будет одинаковой (значение константы)
-        self.gravity = GRAVITY
-
-    def update(self):
-        # применяем гравитационный эффект:
-        # движение с ускорением под действием гравитации
-        self.velocity[1] += self.gravity
-        # перемещаем частицу
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
-        # убиваем, если частица ушла за экран
-        if not self.rect.colliderect(screen_rect):
-            self.kill()
-
-
-def create_particles(position):
-    # количество создаваемых частиц
-    particle_count = 1
-    # возможные скорости
-    velocity = range(-9, 1), range(-40, 0)
-    for _ in range(particle_count):
-        Particle(position, random.choice(velocity[0]), random.choice(velocity[1]))
 
 
 def render():
@@ -129,7 +89,8 @@ def render():
     screen.blit(bg, (0, 0))
     interactive_obj.ground_first.draw(screen)
     interactive_obj.aid_kit.draw(screen)
-    coin_sprite.draw(screen)
+    interactive_obj.coin_sprite.draw(screen)
+    interactive_obj.particle_sprite.draw(screen)
     func_rotate.blitRotate(screen, weapon, (player.rect.topleft[0] + 20, player.rect.topleft[1] + 30), (0, 0), angle)
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
@@ -260,6 +221,7 @@ def set_map(lvl):
     interactive_obj.ground_first.empty()
     interactive_obj.aid_kit.empty()
     interactive_obj.coin_sprite.empty()
+    interactive_obj.particle_sprite.empty()
     mobs_sprite.empty()
     with open(f'data/map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
@@ -415,17 +377,6 @@ while running:
                 mob_count -= c
                 damage_count += default_DAMAGE_PLAYER * c
 
-        # Атака
-        if player.rotate and not player.pause:
-            if final_angle >= 0:
-                angle -= 10 / FPS + speed_attack
-                final_angle -= 10 / FPS + speed_attack
-                player.stamina -= 0.4679 / speed_attack**0.201
-            else:
-                player.rotate = False
-                angle = 0
-                final_angle = 360
-
         # Анимация бега
         if event.type == STEP_EVENT and not player.pause:
             player.update()
@@ -438,8 +389,9 @@ while running:
         # Анимация вращения монетки
         if event.type == COIN_FLIP and not player.pause:
             if not player.time_stop:
-                for sprite in coin_sprite:
-                    sprite.update()
+                for sprite in interactive_obj.coin_sprite:
+                    if sprite.coin:
+                        sprite.update()
                 for sprite in mobs_sprite:
                     sprite.update()
 
@@ -508,16 +460,49 @@ while running:
         if player.stamina < 200:
             player.up_stamina()
     if player.can_jump_flag:
+        part_flag = True
         player.jump()
+    if part_flag and player.check_collide_with_ground():
+        part_flag = False
+        interactive_obj.create_particles(player.rect.bottomleft, 9, (-10, 10), (-10, 0), 1)
+
+    # Атака
+    if player.rotate and not player.pause:
+        if final_angle >= 0:
+            angle -= 10 / FPS + speed_attack
+            final_angle -= 10 / FPS + speed_attack
+            player.stamina -= 1.5
+        else:
+            player.rotate = False
+            angle = 0
+            final_angle = 360
+
+    if not player.rotate and not player.pause:
+        if motion[0] > player.rect.x and motion[1] >= 0:
+            angle = -((motion[1] - WIDTH // 3.5) // 12) \
+                if abs(-((motion[1] - WIDTH // 3.5) // 12)) <= 90 else angle
+        if motion[0] < player.rect.x and motion[1] >= 0:
+            angle = ((motion[1] - WIDTH // 3.5) // 12 - 180) \
+                if abs(((motion[1] - WIDTH // 3.5) // 12 - 180)) <= 360 else angle
 
     # Перемещение
     if KEY[pygame.K_d]:
         if player.check_collide_with_ground():
-            create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50))
+            if not sprint:
+                interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50),
+                                                 1, (-10, -1), (-9, 1), 0.9)
+            elif sprint:
+                interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50), 2,
+                                                 (-10, -1), (-9, 1), 0.9)
         player.move_right()
     if KEY[pygame.K_a]:
         if player.check_collide_with_ground():
-            create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50))
+            if not sprint:
+                interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 1,
+                                                 (1, 10), (-9, 1), 0.9)
+            elif sprint:
+                interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 2,
+                                                 (1, 10), (-9, 1), 0.9)
         player.move_left()
 
     if mob_count == 0:
@@ -529,11 +514,20 @@ while running:
     count_coins = player.check_collide_with_coin()
 
     if motion[0] > player.rect.x and motion[1] >= 0:
-        angle = 0
-        player.left = False
+        if not player.rotate:
+            if right:
+                angle = 0
+                right = False
+            player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
-        angle = 180
-        player.left = True
+        if not player.rotate:
+            if not right:
+                angle = 180
+                right = True
+            player.left = True
+
+    for sprite in interactive_obj.particle_sprite.sprites():
+        sprite.update()
 
     for mob in mobs_sprite.sprites():
         distance = abs(int(player.rect.centerx) - int(mob.rect.centerx))
@@ -546,7 +540,7 @@ while running:
 
     for ball in balls_sprite.sprites():
         accepted_damage += ball.move()
-        if ball.rect.x < 0 or ball.rect.x > 1000:
+        if ball.rect.x < 0 or ball.rect.x > 10000:
             balls_sprite.remove(ball)
 
     player.check_collide_with_aid_kit()
@@ -579,7 +573,7 @@ while running:
         camera.apply(sprite)
     for sprite in mobs_sprite:
         camera.apply(sprite)
-    for sprite in coin_sprite:
+    for sprite in interactive_obj.coin_sprite:
         camera.apply(sprite)
     for sprite in balls_sprite:
         camera.apply(sprite)
