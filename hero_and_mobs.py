@@ -55,6 +55,7 @@ class Hero(pygame.sprite.Sprite):
 
                     self.rect.y -= 45
                 else:
+
                     self.can_jump_flag = False
                     self.can_jump = JUMP_Y
 
@@ -111,7 +112,10 @@ class Hero(pygame.sprite.Sprite):
                 if self.stamina >= 36:
                     self.rotate = True
                     for mob in mobs_sprite.sprites():
-                        if pygame.sprite.collide_mask(mouse_pos, mob) or pygame.sprite.collide_mask(self, mob):
+                        print(self.rect.centerx - mob.rect.centerx)
+                        if -136 <= self.rect.centerx - mob.rect.centerx <= 166 \
+                                and -136 <= self.rect.centery - mob.rect.centery <= 136:
+                            print(True)
                             kill = mob.check_health()
                             if not kill:
                                 mob.back_damage()
@@ -125,8 +129,11 @@ class Hero(pygame.sprite.Sprite):
                 self.heal = 100
 
     def check_collide_with_coin(self):
-        if pygame.sprite.spritecollide(self, interactive_obj.coin_sprite, True):
-            self.coin_count += random.randrange(9, 103)
+        for sprite in interactive_obj.coin_sprite.sprites():
+            if pygame.sprite.collide_mask(sprite, self) and sprite.coin:
+                self.coin_count += random.randrange(9, 103)
+                sprite.kill()
+
         return self.coin_count
 
     def check_collide_with_ground(self):
@@ -181,7 +188,7 @@ class Mob(pygame.sprite.Sprite):
             self.health -= player.damage
             self.damage_visual = True
             if self.health <= 0:
-                if random.randrange(0, 2) == 1:
+                if random.randrange(0, 1) == 1:
                     interactive_obj.spawn_coin((self.rect.centerx, self.rect.centery))
                 mobs_sprite.remove(self)
                 return 1
@@ -236,16 +243,17 @@ class Slime(Mob):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 5
 
-                if distance < 1000 and self.can_hit:
+                if distance < 700 and self.can_hit:
                     self.attack()
                     self.can_hit = False
 
     def back_damage(self):
-        self.rect.y -= 52
-        if self.direction == 'right':
-            self.rect.x -= 30
-        else:
-            self.rect.x += 30
+        if not self.freeze:
+            self.rect.y -= 52
+            if self.direction == 'right':
+                self.rect.x -= 30
+            else:
+                self.rect.x += 30
 
     def attack(self):
         SlimeBall(self.color, (self.rect.centerx, self.rect.centery - 15), self.direction)
@@ -267,18 +275,24 @@ class SlimeBall(pygame.sprite.Sprite):
         self.direction = direction
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = pos[0], pos[1] + 5
+        self.mask = pygame.mask.from_surface(self.image)
         balls_sprite.add(self)
 
     def move(self):
-        if not player.pause:
+        if not player.pause and not player.time_stop:
             if self.direction == 'left':
                 self.rect = self.rect.move(-20, 0)
             elif self.direction == 'right':
                 self.rect = self.rect.move(20, 0)
             if pygame.sprite.collide_mask(player, self):
                 player.check_health(self.damage)
+                interactive_obj.create_particles(self.rect.topleft, 3, (3, 18), (-20, -15), 2)
                 balls_sprite.remove(self)
                 return self.damage
+            if pygame.sprite.spritecollide(self, interactive_obj.ground_first, False):
+                interactive_obj.create_particles(self.rect.topleft, 3, (3, 18), (-20, -15), 2)
+                balls_sprite.remove(self)
+                return 0
         return 0
 
 
@@ -287,4 +301,3 @@ player = Hero(hero_sprite)
 
 balls_sprite = pygame.sprite.Group()
 mobs_sprite = pygame.sprite.Group()
-
