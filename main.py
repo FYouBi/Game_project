@@ -1,5 +1,8 @@
+import pygame.sprite
+
 import hero_and_mobs
 import interactive_obj
+import datetime
 from cam import Camera
 from cursor import cursor, trigger
 import func_rotate
@@ -21,6 +24,9 @@ ABILITY = False
 
 ABILITY_TIME = pygame.USEREVENT + 5
 pygame.time.set_timer(ABILITY_TIME, 0)
+
+sound_play_timer = pygame.USEREVENT + 9
+pygame.time.set_timer(sound_play_timer, 1000)
 
 endurance = pygame.USEREVENT + 7
 pygame.time.set_timer(endurance, 1000)
@@ -48,6 +54,7 @@ die_hero_sound = pygame.mixer.Sound('sounds/dead.wav')
 hit_hero_sound = pygame.mixer.Sound('sounds/hit.wav')
 the_world = pygame.mixer.Sound('sounds/the_world.wav')
 time_resume = pygame.mixer.Sound('sounds/time_resumes.wav')
+stamina_low = pygame.mixer.Sound('sounds/stamina_low.mp3')
 play_sounder = 0
 pygame.mixer.music.load(f'sounds/sounds_back_music.mp3')
 pygame.mixer.music.play(-1, 0, 100)
@@ -56,17 +63,30 @@ status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png').conv
 battery = pygame.image.load(f'images/battery-export.png').convert_alpha(screen)
 weapon = pygame.image.load(f'images/weapon.png').convert_alpha(screen)
 weapon = pygame.transform.scale(weapon, (136, 6))
+vignette_stamina = pygame.sprite.Sprite()
+vignette_stamina.image = pygame.image.load(f'images/vignette_stamina.png').convert_alpha(screen)
+vignette_stamina.rect = vignette_stamina.image.get_rect()
+vignette_sprite_stamina = pygame.sprite.Group()
+vignette_sprite_stamina.add(vignette_stamina)
+vignette = pygame.sprite.Sprite()
+vignette.image = pygame.image.load(f'images/vignette.png').convert_alpha(screen)
+vignette.rect = vignette.image.get_rect()
+vignette_sprite = pygame.sprite.Group()
+vignette_sprite.add(vignette)
 heal = False
 count_coins = 0
 pause = False
 right = True
-KEY = 0
+part_flag = False
 confirmation_exit = False
 select_button_options = 0
 bg = pygame.image.load(f'images/fon.png').convert_alpha(screen)
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 buttons_option = ['resume', 'exit']
-levels = [[1, True, 1], [2, False, 10], [3, False, 18]]
+with open('data/data.txt', 'r') as data:
+    data = data.readlines()[0].split()
+    print(data)
+    levels = [[1, int(data[0]), 1], [2, int(data[1]), 10], [3, int(data[2]), 18]]
 render_update = True
 resume_color = [DARK_GREEN, GREEN]
 exit_color = [CRIMSON, RED]
@@ -77,10 +97,20 @@ motion = [0, 0]
 mob_count = 7
 final_angle = 360
 angle = 0
-part_flag = False
 damage_count = 0
 accepted_damage = 0
 hero_lvl = HERO_LVL
+sound_low_play = False
+begin_time = datetime.timedelta(minutes=0, seconds=0)
+finish_time = datetime.timedelta(minutes=0, seconds=0)
+current_time = datetime.timedelta(minutes=0, seconds=0)
+
+
+def save():
+    with open('data/data.txt', 'w') as data:
+        str_ = ['1' if i[1] else '0' for i in levels]
+        data.write(' '.join(str_) + '\n')
+        data.write(str(hero_lvl))
 
 
 def render():
@@ -95,6 +125,12 @@ def render():
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
     balls_sprite.draw(screen)
+    if player.health <= 40:
+        vignette_sprite.draw(screen)
+        pygame.mixer.music.set_volume(0.1)
+    if player.stamina <= 75:
+        pygame.mixer.music.set_volume(0.1)
+        vignette_sprite_stamina.draw(screen)
 
     # Отрисовка кол-ва монет
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
@@ -143,6 +179,9 @@ def render():
     render_die = font.render(f'{mob_count}/7', False, WHITE)
     screen.blit(render_die, (WIDTH // 2 - 5, 20))
 
+    score = font.render(f'{str(current_time - begin_time)[2:]}', False, SILVER)
+    screen.blit(score, (WIDTH // 2 - 23, 100))
+
     if death:
         font_died = pygame.font.Font('fonts/pixel_font.otf', 126)
         render_die = font_died.render('Ты умер', False, CRIMSON)
@@ -158,18 +197,25 @@ def render():
         screen.blit(render_die, (WIDTH//3, HEIGHT // 1.5))
 
     if win_cycle:
-        font = pygame.font.Font('fonts/pixel_font.otf', 96)
         font = pygame.font.Font('fonts/pixel_font.otf', 33)
         score = font.render('СЧЕТ:', False, YELLOW)
-        screen.blit(score, (WIDTH // 2, HEIGHT // 3))
+        screen.blit(score, (WIDTH // 2 - 35, HEIGHT // 3))
         score = font.render(f'НАНЕСЕННЫЙ УРОН:    {damage_count}', False, YELLOW)
-        screen.blit(score, (WIDTH // 2 - 140, HEIGHT // 2.5))
+        screen.blit(score, (WIDTH // 2 - 175, HEIGHT // 2.5))
         score = font.render(f'ПОЛУЧЕННЫЙ УРОН    {accepted_damage}', False, YELLOW)
-        screen.blit(score, (WIDTH // 2 - 140, HEIGHT // 2.2))
+        screen.blit(score, (WIDTH // 2 - 175, HEIGHT // 2.2))
         score = font.render(f'ОЧКИ    {count_coins}', False, YELLOW)
-        screen.blit(score, (WIDTH // 2 - 10, HEIGHT // 2))
-        score = font.render('ЧТОБЫ ПРОДОЛЖИТЬ НАЖМИТЕ "SPACE"', False, YELLOW)
-        screen.blit(score, (WIDTH//3, HEIGHT // 1.5))
+        screen.blit(score, (WIDTH // 2 - 45, HEIGHT // 2))
+        score = font.render(f'ВРЕМЯ {str(finish_time - begin_time)[2:]}', False, YELLOW)
+        screen.blit(score, (WIDTH // 2 - 85, HEIGHT // 1.7))
+        if levels[current_lvl][0] == 0:
+            score = font.render('ПОЗДРАВЛЯЕМ, ВЫ ПРОШЛИ ИГРУ:', False, YELLOW)
+            screen.blit(score, (WIDTH // 1.5, HEIGHT // 4))
+            score = font.render('ЧТОБЫ ВЕРНУТьСЯ НА ВЫБОР УРОВНЯ НАЖМИТЕ "SPACE"', False, YELLOW)
+            screen.blit(score, (WIDTH // 3 - 45, HEIGHT // 1.6 + 20))
+        else:
+            score = font.render('ЧТОБЫ ПРОДОЛЖИТЬ НАЖМИТЕ "SPACE"', False, YELLOW)
+            screen.blit(score, (WIDTH//3 - 15, HEIGHT // 1.6 + 20))
 
     if player.pause:
         pygame.mixer.music.set_volume(0.1)
@@ -187,7 +233,10 @@ def render():
         text = font_pause.render(f'НАЖМИТЕ "SPACE" ЧТОБЫ ВЕРНУТЬСЯ НА ВЫБОР УРОВНЯ', True, SILVER)
         screen.blit(text, (WIDTH//3, HEIGHT - 100))
     else:
-        pygame.mixer.music.set_volume(0.6)
+        if player.stamina <= 75 or player.health <= 40:
+            pygame.mixer.music.set_volume(0.1)
+        else:
+            pygame.mixer.music.set_volume(0.6)
     screen.blit(status_image, (5, 5))
     screen.blit(battery, (WIDTH - 100, 10))
     font_version = pygame.font.Font('fonts/pixel_font.otf', 26)
@@ -222,6 +271,7 @@ def set_map(lvl):
     interactive_obj.aid_kit.empty()
     interactive_obj.coin_sprite.empty()
     interactive_obj.particle_sprite.empty()
+    balls_sprite.empty()
     mobs_sprite.empty()
     with open(f'data/map{lvl}.txt', 'r') as _map:
         for y, i in enumerate(_map):
@@ -235,7 +285,8 @@ def set_map(lvl):
 
 
 def reset_player(flag):
-    global mob_count, damage_count, accepted_damage, count_coins, hero_lvl, angle, final_angle
+    global mob_count, damage_count, accepted_damage, count_coins, hero_lvl, angle, \
+        final_angle, begin_time, finish_time, current_time
     player.stamina = 200
     player.heal = 100
     player.health = 100
@@ -247,10 +298,15 @@ def reset_player(flag):
     mob_count = 7
     damage_count = 0
     accepted_damage = 0
+    count_coins = player.coin_count = 0
+    begin_time = datetime.timedelta(minutes=0, seconds=0)
+    finish_time = datetime.timedelta(minutes=0, seconds=0)
+    current_time = datetime.timedelta(minutes=0, seconds=0)
     if flag:
+        time = datetime.datetime.now()
+        begin_time = datetime.timedelta(minutes=time.minute, seconds=time.second)
         hero_lvl += count_coins // 100
         player.damage = 14 + 4 * hero_lvl
-        count_coins = player.coin_count = 0
 
 
 def death_screen():
@@ -259,6 +315,7 @@ def death_screen():
         for event in pygame.event.get():
             KEY = pygame.key.get_pressed()
             if event.type == pygame.QUIT:
+                save()
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
@@ -283,11 +340,13 @@ def death_screen():
 
 
 def select_lvl_func():
-    global select_lvl, current_lvl, KEY, running
+    global select_lvl, current_lvl, KEY, running, begin_time, count_coins
+    count_coins = player.coin_count = 0
     while select_lvl:
         for event in pygame.event.get():
             KEY = pygame.key.get_pressed()
             if event.type == pygame.QUIT:
+                save()
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_d:
@@ -298,27 +357,34 @@ def select_lvl_func():
                     set_map(levels[current_lvl][0])
                     select_lvl = False
                     running = True
+                    time = datetime.datetime.now()
+                    begin_time = datetime.timedelta(minutes=time.minute, seconds=time.second)
         screen.fill(BLACK)
         select_levels(levels[current_lvl])
         pygame.display.update()
 
 
 def win():
-    global win_cycle, current_lvl, KEY, running
+    global win_cycle, current_lvl, KEY, running, select_lvl
     while win_cycle:
         for event in pygame.event.get():
             KEY = pygame.key.get_pressed()
             if event.type == pygame.QUIT:
+                save()
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    reset_player(True)
-                    running = True
-                    current_lvl += 1
-                    levels[current_lvl][1] = True
-                    set_map(levels[current_lvl][0])
-                    win_cycle = False
-
+                    if levels[current_lvl][0] != 3:
+                        reset_player(True)
+                        running = True
+                        current_lvl += 1
+                        levels[current_lvl][1] = True
+                        set_map(levels[current_lvl][0])
+                        win_cycle = False
+                    else:
+                        win_cycle = False
+                        select_lvl = True
+                        select_lvl_func()
         screen.fill(BLACK)
         render()
         pygame.display.update()
@@ -334,6 +400,10 @@ while running:
 
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == sound_play_timer:
+            if player.stamina <= 75 or player.health <= 40:
+                stamina_low.play(loops=0, maxtime=0, fade_ms=0)
 
         if event.type == pygame.KEYDOWN:
             # Перемещение по меню паузы
@@ -358,6 +428,7 @@ while running:
             # Выбор опции
             if event.key == pygame.K_e and player.pause:
                 if buttons_option[select_button_options] == 'exit':
+                    save()
                     running = False
                 if buttons_option[select_button_options] == 'resume':
                     player.pause = False
@@ -426,12 +497,9 @@ while running:
             # Хил
             if event.key == pygame.K_q:
                 heal = True
-            # Блок
-            if event.key == pygame.K_f and not sprint:
-                block = True
-                player.velocity -= 0.5
             # jump
             if event.key == pygame.K_SPACE and player.check_collide_with_ground():
+                interactive_obj.create_particles(player.rect.bottomleft, 10, (-5, 10), (-10, 15), 0.1)
                 player.can_jump_flag = True
 
         if event.type == pygame.KEYUP and not player.pause:
@@ -441,11 +509,6 @@ while running:
             # Отмена хила
             if event.key == pygame.K_q:
                 heal = False
-            # Отмена блока
-            if event.key == pygame.K_f and block:
-                block = False
-                player.block = False
-                player.velocity += 0.5
 
     if sprint and player.stamina > 0:
         player.sprint()
@@ -453,10 +516,7 @@ while running:
         player.velocity_dawn()
     if heal:
         player.heal_up()
-    if block and player.stamina > 0:
-        player.block = True
-        player.stamina -= 0.1
-    if not block and not sprint:
+    if not sprint:
         if player.stamina < 200:
             player.up_stamina()
     if player.can_jump_flag:
@@ -486,29 +546,34 @@ while running:
                 if abs(((motion[1] - WIDTH // 3.5) // 12 - 180)) <= 360 else angle
 
     # Перемещение
-    if KEY[pygame.K_d]:
-        if player.check_collide_with_ground():
-            if not sprint:
-                interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50),
-                                                 1, (-10, -1), (-9, 1), 0.9)
-            elif sprint:
-                interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50), 2,
-                                                 (-10, -1), (-9, 1), 0.9)
-        player.move_right()
-    if KEY[pygame.K_a]:
-        if player.check_collide_with_ground():
-            if not sprint:
-                interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 1,
-                                                 (1, 10), (-9, 1), 0.9)
-            elif sprint:
-                interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 2,
-                                                 (1, 10), (-9, 1), 0.9)
-        player.move_left()
+    if not player.pause:
+        if KEY[pygame.K_d]:
+            if player.check_collide_with_ground():
+                if not sprint:
+                    interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50),
+                                                     1, (-10, -1), (-9, 1), 0.9)
+                elif sprint:
+                    interactive_obj.create_particles((player.rect.topleft[0], player.rect.topleft[1] + 50), 2,
+                                                     (-10, -1), (-9, 1), 0.9)
+            player.move_right()
+        if KEY[pygame.K_a]:
+            if player.check_collide_with_ground():
+                if not sprint:
+                    interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 1,
+                                                     (1, 10), (-9, 1), 0.9)
+                elif sprint:
+                    interactive_obj.create_particles((player.rect.topright[0], player.rect.topright[1] + 50), 2,
+                                                     (1, 10), (-9, 1), 0.9)
+            player.move_left()
 
     if mob_count == 0:
         win_cycle = True
         running = False
+        finish_time = current_time
         win()
+
+    time = datetime.datetime.now()
+    current_time = datetime.timedelta(minutes=time.minute, seconds=time.second)
 
     # Добавление монеток
     count_coins = player.check_collide_with_coin()
@@ -516,13 +581,11 @@ while running:
     if motion[0] > player.rect.x and motion[1] >= 0:
         if not player.rotate:
             if right:
-                angle = 0
                 right = False
             player.left = False
     if motion[0] < player.rect.x and motion[1] >= 0:
         if not player.rotate:
             if not right:
-                angle = 180
                 right = True
             player.left = True
 
@@ -540,7 +603,7 @@ while running:
 
     for ball in balls_sprite.sprites():
         accepted_damage += ball.move()
-        if ball.rect.x < 0 or ball.rect.x > 10000:
+        if ball.rect.x < -20 or ball.rect.x > WIDTH + 10:
             balls_sprite.remove(ball)
 
     player.check_collide_with_aid_kit()
@@ -579,7 +642,7 @@ while running:
         camera.apply(sprite)
     for sprite in interactive_obj.ground_first:
         camera.apply(sprite)
-    clock.tick(FPS)
+    clock.tick(35)
     pygame.display.update()
 
 pygame.quit()
