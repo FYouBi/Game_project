@@ -1,3 +1,5 @@
+import pygame.sprite
+
 import hero_and_mobs
 import interactive_obj
 import datetime
@@ -57,6 +59,16 @@ status_image = pygame.image.load(f'images/hud_hp_stamina_medic-export.png').conv
 battery = pygame.image.load(f'images/battery-export.png').convert_alpha(screen)
 weapon = pygame.image.load(f'images/weapon.png').convert_alpha(screen)
 weapon = pygame.transform.scale(weapon, (136, 6))
+vignette_stamina = pygame.sprite.Sprite()
+vignette_stamina.image = pygame.image.load(f'images/vignette_stamina.png').convert_alpha(screen)
+vignette_stamina.rect = vignette_stamina.image.get_rect()
+vignette_sprite_stamina = pygame.sprite.Group()
+vignette_sprite_stamina.add(vignette_stamina)
+vignette = pygame.sprite.Sprite()
+vignette.image = pygame.image.load(f'images/vignette.png').convert_alpha(screen)
+vignette.rect = vignette.image.get_rect()
+vignette_sprite = pygame.sprite.Group()
+vignette_sprite.add(vignette)
 heal = False
 count_coins = 0
 pause = False
@@ -107,6 +119,10 @@ def render():
     hero_sprite.draw(screen)
     mobs_sprite.draw(screen)
     balls_sprite.draw(screen)
+    if player.health <= 20:
+        vignette_sprite.draw(screen)
+    if player.stamina <= 75:
+        vignette_sprite_stamina.draw(screen)
 
     # Отрисовка кол-ва монет
     font_count_coin = pygame.font.Font('fonts/pixel_font.otf', 30)
