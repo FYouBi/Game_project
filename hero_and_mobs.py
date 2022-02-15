@@ -41,7 +41,6 @@ class Hero(pygame.sprite.Sprite):
         self.heal = default_HEALTH_PLAYER
         self.update_render_player = True
         self.pause = False
-        self.block = False
         self.left = False
         self.rotate = False
         self.time_stop = False
@@ -55,7 +54,6 @@ class Hero(pygame.sprite.Sprite):
 
                     self.rect.y -= 45
                 else:
-
                     self.can_jump_flag = False
                     self.can_jump = JUMP_Y
 
@@ -111,11 +109,13 @@ class Hero(pygame.sprite.Sprite):
             if self.update_render_player:
                 if self.stamina >= 36:
                     self.rotate = True
+                    for ball in balls_sprite.sprites():
+                        if -136 <= self.rect.centerx - ball.rect.centerx <= 166 \
+                                and -136 <= self.rect.centery - ball.rect.centery <= 166:
+                            ball.direction = 'right' if ball.direction == 'left' else 'left'
                     for mob in mobs_sprite.sprites():
-                        print(self.rect.centerx - mob.rect.centerx)
                         if -136 <= self.rect.centerx - mob.rect.centerx <= 166 \
-                                and -136 <= self.rect.centery - mob.rect.centery <= 136:
-                            print(True)
+                                and -136 <= self.rect.centery - mob.rect.centery <= 166:
                             kill = mob.check_health()
                             if not kill:
                                 mob.back_damage()
@@ -131,7 +131,7 @@ class Hero(pygame.sprite.Sprite):
     def check_collide_with_coin(self):
         for sprite in interactive_obj.coin_sprite.sprites():
             if pygame.sprite.collide_mask(sprite, self) and sprite.coin:
-                self.coin_count += random.randrange(9, 103)
+                self.coin_count += random.randrange(10, 25)
                 sprite.kill()
 
         return self.coin_count
@@ -185,11 +185,13 @@ class Mob(pygame.sprite.Sprite):
 
     def check_health(self):
         if not player.pause:
+            interactive_obj.create_particles(self.rect.topleft, 6, (-15, 0), (-5, 10), 0.1)
             self.health -= player.damage
             self.damage_visual = True
             if self.health <= 0:
-                if random.randrange(0, 1) == 1:
+                if True:
                     interactive_obj.spawn_coin((self.rect.centerx, self.rect.centery))
+                interactive_obj.create_particles(self.rect.bottomleft, 10, (-10, 10), (-10, 10), -0.1)
                 mobs_sprite.remove(self)
                 return 1
             return 0
