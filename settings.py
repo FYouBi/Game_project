@@ -29,13 +29,12 @@ SILVER = 192, 192, 192
 YELLOW = 255, 170, 0
 BACKGROUND = 69, 68, 89
 
-STATS_MOB_SLIME = {'1': (14, 14*3), '2': (28, 14*5), '3': (14, 14*7)}
+STATS_MOB_SLIME = {'1': (14, 14*3), '2': (28, 14*5), '3': (39, 14*7)}
 STEP_MOBS_BEFORE_DIED = ['UP', 'RIGHT', 'LEFT', 'DOWN']
 with open('data/data.txt', 'r') as stats:
-    SPEED_ATTACK = 20
+    SPEED_ATTACK = 30
     stats = stats.readlines()
     HERO_LVL = int(stats[1])
-    print(HERO_LVL)
     default_DAMAGE_PLAYER = 14 + 4 * HERO_LVL
 default_HEALTH_PLAYER = 100
 default_HEALTH_MOB = 56
