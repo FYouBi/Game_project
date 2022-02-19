@@ -10,14 +10,6 @@ class Cursor(pygame.sprite.Sprite):
         self.aim = 0
         self.have_target = False
 
-    def change_aim(self):
-        self.aim = 1 if self.aim == 0 else 0
-        if self.aim:
-            self.image = pygame.image.load("images/auto_aim_trigger.png")
-        else:
-            self.image = pygame.image.load("images/trigger.png")
-
-
 trigger = pygame.sprite.Group()
 cursor = Cursor(trigger)
 

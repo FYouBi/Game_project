@@ -131,7 +131,7 @@ class Hero(pygame.sprite.Sprite):
     def check_collide_with_coin(self):
         for sprite in interactive_obj.coin_sprite.sprites():
             if pygame.sprite.collide_mask(sprite, self) and sprite.coin:
-                self.coin_count += random.randrange(10, 25)
+                self.coin_count += random.randrange(25, 75)
                 sprite.kill()
 
         return self.coin_count
@@ -243,7 +243,7 @@ class Slime(Mob):
                     if self.hero_pos[0] > self.rect.x - 1:
                         self.rect.x -= 5
 
-                if distance < 700 and self.can_hit:
+                if distance < 800 and self.can_hit:
                     self.attack()
                     self.can_hit = False
 

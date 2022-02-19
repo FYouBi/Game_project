@@ -13,6 +13,7 @@ def blitRotate(surf, image, pos, originPos, angle):
     rotated_image_rect = rotated_image.get_rect(center=rotated_image_center)
 
     surf.blit(rotated_image, rotated_image_rect)
+    return rotated_image_rect
 
 
 def blitRotate2(surf, image, topleft, angle):
