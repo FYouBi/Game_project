@@ -1,10 +1,6 @@
 import pygame
-from win32api import GetSystemMetrics
-
-# WIDTH, HEIGHT = GetSystemMetrics(0), GetSystemMetrics(1)
 
 WIDTH, HEIGHT = 1920, 1080
-# WIDTH, HEIGHT = 1000, 700
 screen = pygame.display.set_mode((WIDTH, HEIGHT), 32, 32)
 FPS = 59
 SPEED = 7.5
