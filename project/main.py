@@ -1,11 +1,10 @@
 import pygame.sprite
-import hero_and_mobs
 import interactive_obj
 import datetime
-from cam import Camera
-from cursor import cursor, trigger
-import func_rotate
-from hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
+from project.cam import Camera
+from project.cursor import cursor, trigger
+from project import func_rotate, hero_and_mobs
+from project.hero_and_mobs import player, hero_sprite, mobs_sprite, balls_sprite
 from settings import *
 
 pygame.mixer.pre_init(44100, -16, 1, 512)
