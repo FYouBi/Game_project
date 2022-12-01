@@ -486,7 +486,7 @@ while running:
             player.velocity = SPEED
 
         if event.type == pygame.KEYDOWN and not player.pause:
-            # Использование способности
+            # Использование способности1
             if event.key == pygame.K_x and ABILITY:
                 bar = True
                 ABILITY = False

@@ -5,6 +5,7 @@ import pygame
 from pygame.sprite import AbstractGroup
 
 kill = True
+# pyinstaller --onefile individual_project.py
 
 
 def spawn_coin(pos):
