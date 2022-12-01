@@ -115,7 +115,7 @@ def save():
 
 def render():
     global PIXEL_SEC, width_batery_color, bar, count_coins, angle, weapon_rect
-    # Отрисовка спрайтов
+    # Отрисовка всех спрайтов
     screen.blit(bg, (0, 0))
     interactive_obj.ground_first.draw(screen)
     interactive_obj.aid_kit.draw(screen)
